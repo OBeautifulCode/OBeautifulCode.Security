@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{0F25254C-160C-49BC-BC51-FD9DCA4D8652}</ProjectGuid>
+    <ProjectGuid>{623FD24F-672A-4B11-BC58-25B466ABEA14}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>OBeautifulCode.Security.Test</RootNamespace>
