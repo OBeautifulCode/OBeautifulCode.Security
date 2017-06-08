@@ -1,4 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/ad93171lk8re0s3o?svg=true)](https://ci.appveyor.com/project/SurajGupta/obeautifulcode-template)
+[![Build status](https://ci.appveyor.com/api/projects/status/7ow4thjine21aqm8?svg=true)](https://ci.appveyor.com/project/SurajGupta/obeautifulcode-security)
 
 
 Security Helpers
