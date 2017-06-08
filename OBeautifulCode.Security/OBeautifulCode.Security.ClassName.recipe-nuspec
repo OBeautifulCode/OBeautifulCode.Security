@@ -1,0 +1,12 @@
+﻿<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>OBeautifulCode.Security.ClassName</id>
+    <description>Recipe description.</description>
+    <tags>recipe security</tags>
+    <developmentDependency>true</developmentDependency>
+  </metadata>
+  <files>
+    <file src="ClassName.cs" target="content\net45\.OBeautifulCode.Recipes\OBeautifulCode.Security\ClassName.cs" />
+  </files>
+</package>
