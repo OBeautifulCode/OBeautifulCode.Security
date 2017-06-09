@@ -41,6 +41,10 @@
     <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BouncyCastle.Crypto, Version=1.8.1.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
+      <HintPath>..\packages\BouncyCastle.1.8.1\lib\BouncyCastle.Crypto.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="FakeItEasy, Version=2.3.3.0, Culture=neutral, PublicKeyToken=eff28e2146d5fd2c, processorArchitecture=MSIL">
       <HintPath>..\packages\FakeItEasy.2.3.3\lib\net40\FakeItEasy.dll</HintPath>
       <Private>True</Private>
@@ -83,22 +87,28 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include=".OBeautifulCode.Recipes\OBeautifulCode.AutoFakeItEasy\AutoFakeItEasyBootstrapper.cs" />
+    <Compile Include=".OBeautifulCode.Recipes\OBeautifulCode.Reflection\AssemblyHelper.cs" />
+    <Compile Include=".OBeautifulCode.Recipes\OBeautifulCode.Reflection\CompressionMethod.cs" />
     <Compile Include="MyClassTest.cs" />
+    <Compile Include="PemHelperTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OBeautifulCode.Security\OBeautifulCode.Security.csproj">
-      <Project>{d8e4eb63-ba31-4f7b-9b0e-aa9a046a6b85}</Project>
+      <Project>{A9CE0B3B-ECDC-49BA-BF41-90A4EA6091F6}</Project>
       <Name>OBeautifulCode.Security</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <EmbeddedResource Include="csr.pem" />
     <None Include="packages.config" />
     <AdditionalFiles Include="..\common\stylecop.json">
       <Link>stylecop.json</Link>
       <InProject>false</InProject>
     </AdditionalFiles>
+    <EmbeddedResource Include="private-key.pem" />
+    <EmbeddedResource Include="public-key.pem" />
   </ItemGroup>
   <ItemGroup>
     <CodeAnalysisDictionary Include="..\common\codeanalysis-dictionary.xml">

@@ -40,16 +40,24 @@
     <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BouncyCastle.Crypto, Version=1.8.1.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
+      <HintPath>..\packages\BouncyCastle.1.8.1\lib\BouncyCastle.Crypto.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ClassName.cs" />
+    <Compile Include=".Spritely.Recipes\MustValidation\MakeRule.cs" />
+    <Compile Include=".Spritely.Recipes\MustValidation\MustExtensions.cs" />
+    <Compile Include=".Spritely.Recipes\MustValidation\RuleExtensions.cs" />
+    <Compile Include=".Spritely.Recipes\MustValidation\Rules.cs" />
+    <Compile Include=".Spritely.Recipes\MustValidation\ValidatedNotNullAttribute.cs" />
+    <Compile Include="PemHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="OBeautifulCode.Security.ClassName.recipe-nuspec" />
     <None Include="OBeautifulCode.Security.template-nuspec" />
     <None Include="packages.config" />
     <AdditionalFiles Include="..\common\stylecop.json">
