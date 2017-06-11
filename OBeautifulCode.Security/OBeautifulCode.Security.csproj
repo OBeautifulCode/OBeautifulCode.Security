@@ -49,15 +49,19 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include=".Naos.Recipes\TupleInitializers\Initializers.cs" />
     <Compile Include=".Spritely.Recipes\MustValidation\MakeRule.cs" />
     <Compile Include=".Spritely.Recipes\MustValidation\MustExtensions.cs" />
     <Compile Include=".Spritely.Recipes\MustValidation\RuleExtensions.cs" />
     <Compile Include=".Spritely.Recipes\MustValidation\Rules.cs" />
     <Compile Include=".Spritely.Recipes\MustValidation\ValidatedNotNullAttribute.cs" />
+    <Compile Include="CertHelper.cs" />
     <Compile Include="PemHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SignatureAlgorithm.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="OBeautifulCode.Security.CertHelper.recipe-nuspec" />
     <None Include="OBeautifulCode.Security.template-nuspec" />
     <None Include="packages.config" />
     <AdditionalFiles Include="..\common\stylecop.json">
