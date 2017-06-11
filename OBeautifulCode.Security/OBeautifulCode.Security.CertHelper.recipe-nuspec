@@ -3,7 +3,7 @@
   <metadata>
     <id>OBeautifulCode.Security.CertHelper</id>
     <description>Helper methods for dealing with certificates.</description>
-    <tags>certificate signing request csr rsa asymmetric key</tags>
+    <tags>certificate signing request csr rsa asymmetric key pem</tags>
     <developmentDependency>true</developmentDependency>
     <dependencies>
       <dependency id="BouncyCastle" version="1.8.1" />
