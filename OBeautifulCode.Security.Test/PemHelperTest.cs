@@ -8,6 +8,7 @@ namespace OBeautifulCode.Security.Test
 {
     using System;
     using System.IO;
+    using System.Text.RegularExpressions;
 
     using FluentAssertions;
 
@@ -43,10 +44,10 @@ namespace OBeautifulCode.Security.Test
             var csr = ReadCsrFromPemEncodedString(expected);
 
             // Act
-            var actual = csr.AsPemEncodedString();
+            var actual = csr.AsPemEncodedString().RemoveLineBreaks();
 
             // Assert
-            actual.Should().Be(expected);
+            actual.Should().Be(expected.RemoveLineBreaks());
         }
 
         [Fact]
@@ -70,10 +71,10 @@ namespace OBeautifulCode.Security.Test
             var privateKey = ReadPrivateKeyFromPemEncodedString(expected);
 
             // Act
-            var actual = privateKey.AsPemEncodedString();
+            var actual = privateKey.AsPemEncodedString().RemoveLineBreaks();
 
             // Assert
-            actual.Should().Be(expected);
+            actual.Should().Be(expected.RemoveLineBreaks());
         }
 
         [Fact]
@@ -84,10 +85,10 @@ namespace OBeautifulCode.Security.Test
             var publicKey = ReadPublicKeyFromPemEncodedString(expected);
 
             // Act
-            var actual = publicKey.AsPemEncodedString();
+            var actual = publicKey.AsPemEncodedString().RemoveLineBreaks();
 
             // Assert
-            actual.Should().Be(expected);
+            actual.Should().Be(expected.RemoveLineBreaks());
         }
 
         [Fact]
@@ -111,10 +112,10 @@ namespace OBeautifulCode.Security.Test
             var privateKeyPair = ReadAsymmetricKeyPairFromPemEncodedString(expected);
 
             // Act
-            var actual = privateKeyPair.AsPemEncodedString();
+            var actual = privateKeyPair.AsPemEncodedString().RemoveLineBreaks();
 
             // Assert
-            actual.Should().Be(expected);
+            actual.Should().Be(expected.RemoveLineBreaks());
         }
 
         private static Pkcs10CertificationRequest ReadCsrFromPemEncodedString(
@@ -163,6 +164,13 @@ namespace OBeautifulCode.Security.Test
                 result = (AsymmetricCipherKeyPair)pemObject;
             }
 
+            return result;
+        }
+
+        private static string RemoveLineBreaks(
+            this string value)
+        {
+            var result = Regex.Replace(value, @"\r\n?|\n", string.Empty);
             return result;
         }
 
