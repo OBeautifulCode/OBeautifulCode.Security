@@ -76,6 +76,7 @@ namespace OBeautifulCode.Security
         /// <exception cref="ArgumentException"><paramref name="signatureAlgorithm"/> is <see cref="SignatureAlgorithm.None"/>.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="commonName"/> or <paramref name="organizationalUnit"/>or <paramref name="organization"/> or <paramref name="locality"/> or <paramref name="state"/> or <paramref name="country"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="commonName"/> or <paramref name="organizationalUnit"/> or <paramref name="organization"/> or <paramref name="locality"/> or <paramref name="state"/> or <paramref name="country"/> is white space.</exception>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
         public static Pkcs10CertificationRequest CreateSslCsr(
             this AsymmetricCipherKeyPair asymmetricKeyPair,
             SignatureAlgorithm signatureAlgorithm,
@@ -147,6 +148,7 @@ namespace OBeautifulCode.Security
         /// <exception cref="ArgumentException"><paramref name="attributesInOrder"/> is empty.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="extensions"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="extensions"/> is empty.</exception>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
         public static Pkcs10CertificationRequest CreateCsr(
             this AsymmetricCipherKeyPair asymmetricKeyPair,
             SignatureAlgorithm signatureAlgorithm,
