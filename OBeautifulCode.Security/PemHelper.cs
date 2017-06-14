@@ -23,6 +23,11 @@ namespace OBeautifulCode.Security
     /// <summary>
     /// Contains helper methods for creating PEM encoded data.
     /// </summary>
+#if !OBeautifulCodeSecurityRecipesProject
+    [System.Diagnostics.DebuggerStepThrough]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Security", "See package version number")]
+#endif
     internal static class PemHelper
     {
         /// <summary>
