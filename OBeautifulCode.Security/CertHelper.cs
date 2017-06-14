@@ -61,7 +61,6 @@ namespace OBeautifulCode.Security
         /// Adapted from: <a href="https://gist.github.com/Venomed/5337717aadfb61b09e58" /> 
         /// </remarks>
         /// <param name="asymmetricKeyPair">The asymmetric cipher key pair.</param>
-        /// <param name="signatureAlgorithm">The algorithm to use for signing.</param>
         /// <param name="commonName">The common name (e.g. "example.com").</param>
         /// <param name="subjectAlternativeNames">Optional.  The subject alternative names. (e.g. "shopping.example.com", "mail.example.com").</param>
         /// <param name="organizationalUnit">The organizational unit (e.g. "Engineering Dept").</param>
@@ -73,13 +72,11 @@ namespace OBeautifulCode.Security
         /// The certificate signing request.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="asymmetricKeyPair"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="signatureAlgorithm"/> is <see cref="SignatureAlgorithm.None"/>.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="commonName"/> or <paramref name="organizationalUnit"/>or <paramref name="organization"/> or <paramref name="locality"/> or <paramref name="state"/> or <paramref name="country"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="commonName"/> or <paramref name="organizationalUnit"/> or <paramref name="organization"/> or <paramref name="locality"/> or <paramref name="state"/> or <paramref name="country"/> is white space.</exception>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
         public static Pkcs10CertificationRequest CreateSslCsr(
             this AsymmetricCipherKeyPair asymmetricKeyPair,
-            SignatureAlgorithm signatureAlgorithm,
             string commonName,
             IReadOnlyCollection<string> subjectAlternativeNames,
             string organizationalUnit,
@@ -89,7 +86,6 @@ namespace OBeautifulCode.Security
             string country)
         {
             new { asymmetricKeyPair }.Must().NotBeNull().OrThrow();
-            new { signatureAlgorithm }.Must().NotBeEqualTo(SignatureAlgorithm.None).OrThrow();
             new { commonName }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
             new { organizationalUnit }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
             new { organization }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
@@ -121,7 +117,7 @@ namespace OBeautifulCode.Security
                 extensions.Add(X509Extensions.SubjectAlternativeName, new X509Extension(false, new DerOctetString(new GeneralNames(generalNames))));
             }
 
-            var result = CreateCsr(asymmetricKeyPair, signatureAlgorithm, attributesInOrder, extensions);
+            var result = CreateCsr(asymmetricKeyPair, SignatureAlgorithm.Sha1WithRsaEncryption, attributesInOrder, extensions);
             return result;
         }
 
