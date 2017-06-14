@@ -13,7 +13,6 @@ namespace OBeautifulCode.Security
     /// A signature algorithm.
     /// </summary>
 #if !OBeautifulCodeSecurityRecipesProject
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     [System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Security", "See package version number")]
 #endif
     internal enum SignatureAlgorithm
