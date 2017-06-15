@@ -15,7 +15,6 @@ namespace OBeautifulCode.Security.Test
 
     using OBeautifulCode.Reflection;
 
-    using Org.BouncyCastle.Cms;
     using Org.BouncyCastle.Crypto;
     using Org.BouncyCastle.Crypto.Parameters;
     using Org.BouncyCastle.OpenSsl;
@@ -44,7 +43,7 @@ namespace OBeautifulCode.Security.Test
         {
             // Arrange
             var expected = AssemblyHelper.ReadEmbeddedResourceAsString("csr.pem");
-            var csr = ReadCsrFromPemEncodedString(expected);
+            var csr = CertHelper.ReadCsrFromPemEncodedString(expected);
 
             // Act
             var actual = csr.AsPemEncodedString().RemoveLineBreaks();
@@ -140,27 +139,13 @@ namespace OBeautifulCode.Security.Test
             // Arrange
             var pkcs7CertChainInPem = AssemblyHelper.ReadEmbeddedResourceAsString("pkcs7-cert-chain.pem");
             var expected = AssemblyHelper.ReadEmbeddedResourceAsString("cert-chain.pem");
-            var certChain = CertHelper.ExtractCertChainFromPemEncodedPkcs7Cms(pkcs7CertChainInPem);
+            var certChain = CertHelper.ExtractCertChainFromPemEncodedPkcs7CmsString(pkcs7CertChainInPem);
 
             // Act
             var actual = certChain.AsPemEncodedString().RemoveLineBreaks();
 
             // Assert
             actual.Should().Be(expected.RemoveLineBreaks());
-        }
-
-        private static Pkcs10CertificationRequest ReadCsrFromPemEncodedString(
-            string pemEncodedCsr)
-        {
-            Pkcs10CertificationRequest result;
-            using (var stringReader = new StringReader(pemEncodedCsr))
-            {
-                var pemReader = new PemReader(stringReader);
-                var pemObject = pemReader.ReadPemObject();
-                result = new Pkcs10CertificationRequest(pemObject.Content);
-            }
-
-            return result;
         }
 
         private static AsymmetricKeyParameter ReadPrivateKeyFromPemEncodedString(

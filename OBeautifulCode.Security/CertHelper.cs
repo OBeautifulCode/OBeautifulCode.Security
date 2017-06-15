@@ -176,22 +176,45 @@ namespace OBeautifulCode.Security
         }
 
         /// <summary>
+        /// Reads a certificate signing request encoded in PEM.
+        /// </summary>
+        /// <param name="pemEncodedCsr">The PEM encoded certificate signing request.</param>
+        /// <returns>
+        /// The certificate signing request.
+        /// </returns>
+        public static Pkcs10CertificationRequest ReadCsrFromPemEncodedString(
+            string pemEncodedCsr)
+        {
+            new { pemEncodedCsr }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+
+            Pkcs10CertificationRequest result;
+            using (var stringReader = new StringReader(pemEncodedCsr))
+            {
+                var pemReader = new PemReader(stringReader);
+                var pemObject = pemReader.ReadPemObject();
+                result = new Pkcs10CertificationRequest(pemObject.Content);
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Extracts a certificate chain from PKCS#7 CMS payload encoded in PEM.
         /// </summary>
-        /// <param name="pemEncodedPayload">The payload containing the PKCS#7 CMS data.</param>
+        /// <param name="pemEncodedPkcs7">The payload containing the PKCS#7 CMS data.</param>
         /// <remarks>
         /// The method is expecting a PKCS#7/CMS SignedData structure containing no "content" and zero SignerInfos.
         /// </remarks>
         /// <returns>
         /// The certificate chain contained in the specified payload.
         /// </returns>
-        public static IList<X509Certificate> ExtractCertChainFromPemEncodedPkcs7Cms(
-            string pemEncodedPayload)
+        public static IList<X509Certificate> ExtractCertChainFromPemEncodedPkcs7CmsString(
+            string pemEncodedPkcs7)
         {
-            new { pemEncodedPayload }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            new { pemEncodedPkcs7 }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
 
             IList<X509Certificate> result;
-            using (var stringReader = new StringReader(pemEncodedPayload))
+            using (var stringReader = new StringReader(pemEncodedPkcs7))
             {
                 var pemReader = new PemReader(stringReader);
                 var pemObject = pemReader.ReadPemObject();
