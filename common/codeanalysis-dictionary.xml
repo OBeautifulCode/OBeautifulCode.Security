@@ -4,9 +4,10 @@
          <Word></Word>
       </Unrecognized>
       <Recognized>
+         <Word>cms</Word>
+         <Word>csr</Word>
          <Word>pem</Word>
          <Word>pkcs</Word>
-         <Word>csr</Word>
       </Recognized>
       <Deprecated>
          <Term PreferredAlternate=""></Term>

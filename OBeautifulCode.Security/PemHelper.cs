@@ -10,6 +10,7 @@
 namespace OBeautifulCode.Security
 {
     using System;
+    using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
     using System.Text;
@@ -17,6 +18,7 @@ namespace OBeautifulCode.Security
     using Org.BouncyCastle.Crypto;
     using Org.BouncyCastle.OpenSsl;
     using Org.BouncyCastle.Pkcs;
+    using Org.BouncyCastle.X509;
 
     using Spritely.Recipes;
 
@@ -81,6 +83,47 @@ namespace OBeautifulCode.Security
             return result;
         }
 
+        /// <summary>
+        /// Encodes an x509 certificate in PEM.
+        /// </summary>
+        /// <param name="cert">The certificate.</param>
+        /// <returns>
+        /// The certificate encoded in PEM.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="cert"/> is null.</exception>
+        public static string AsPemEncodedString(
+            this X509Certificate cert)
+        {
+            new { cert }.Must().NotBeNull().OrThrow();
+
+            var result = EncodeAsPem(cert);
+            return result;
+        }
+
+        /// <summary>
+        /// Encodes a x509 certificate chain in PEM.
+        /// </summary>
+        /// <param name="certChain">The certificate chain.</param>
+        /// <returns>
+        /// The certificate chain encoded in PEM.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
+        public static string AsPemEncodedString(
+            this ICollection<X509Certificate> certChain)
+        {
+            new { certChain }.Must().NotBeNull().OrThrow();
+
+            var stringBuilder = new StringBuilder();
+            foreach (var cert in certChain)
+            {
+                stringBuilder.Append(cert.AsPemEncodedString());
+                stringBuilder.AppendLine();
+            }
+
+            var result = stringBuilder.ToString();
+            return result;
+        }
+
         private static string EncodeAsPem(
             object item)
         {
@@ -96,7 +139,7 @@ namespace OBeautifulCode.Security
 
                 result = stringBuilder.ToString();
             }
-                
+
             return result;
         }
     }

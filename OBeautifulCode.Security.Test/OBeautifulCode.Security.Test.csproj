@@ -102,6 +102,7 @@
   <ItemGroup>
     <None Include="app.config" />
     <EmbeddedResource Include="csr.pem" />
+    <EmbeddedResource Include="cert-chain.pem" />
     <None Include="packages.config" />
     <AdditionalFiles Include="..\common\stylecop.json">
       <Link>stylecop.json</Link>
@@ -109,6 +110,7 @@
     </AdditionalFiles>
     <EmbeddedResource Include="private-key.pem" />
     <EmbeddedResource Include="public-key.pem" />
+    <EmbeddedResource Include="pkcs7-cert-chain.pem" />
   </ItemGroup>
   <ItemGroup>
     <CodeAnalysisDictionary Include="..\common\codeanalysis-dictionary.xml">

@@ -7,6 +7,7 @@
 namespace OBeautifulCode.Security.Test
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Text.RegularExpressions;
 
@@ -14,10 +15,12 @@ namespace OBeautifulCode.Security.Test
 
     using OBeautifulCode.Reflection;
 
+    using Org.BouncyCastle.Cms;
     using Org.BouncyCastle.Crypto;
     using Org.BouncyCastle.Crypto.Parameters;
     using Org.BouncyCastle.OpenSsl;
     using Org.BouncyCastle.Pkcs;
+    using Org.BouncyCastle.X509;
 
     using Xunit;
 
@@ -113,6 +116,34 @@ namespace OBeautifulCode.Security.Test
 
             // Act
             var actual = privateKeyPair.AsPemEncodedString().RemoveLineBreaks();
+
+            // Assert
+            actual.Should().Be(expected.RemoveLineBreaks());
+        }
+
+        [Fact]
+        public static void AsPemEncodedString_ICollection_of_X509Certificate___Should_throw_ArgumentNullException___When_parameter_certChain_is_null()
+        {
+            // Arrange, Act
+            var ex = Record.Exception(() => ((ICollection<X509Certificate>)null).AsPemEncodedString());
+
+            // Assert
+            // ReSharper disable PossibleNullReferenceException
+            ex.Should().BeOfType<ArgumentNullException>();
+            ex.Message.Should().Contain("certChain");
+            // ReSharper restore PossibleNullReferenceException
+        }
+
+        [Fact]
+        public static void AsPemEncodedString_ICollection_of_X509Certificate___Should_return_certificates_encoded_in_PEM___When_called()
+        {
+            // Arrange
+            var pkcs7CertChainInPem = AssemblyHelper.ReadEmbeddedResourceAsString("pkcs7-cert-chain.pem");
+            var expected = AssemblyHelper.ReadEmbeddedResourceAsString("cert-chain.pem");
+            var certChain = CertHelper.ExtractCertChainFromPemEncodedPkcs7Cms(pkcs7CertChainInPem);
+
+            // Act
+            var actual = certChain.AsPemEncodedString().RemoveLineBreaks();
 
             // Assert
             actual.Should().Be(expected.RemoveLineBreaks());

@@ -11,6 +11,7 @@ namespace OBeautifulCode.Security
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
 
     using Naos.Recipes.TupleInitializers;
@@ -18,11 +19,14 @@ namespace OBeautifulCode.Security
     using Org.BouncyCastle.Asn1;
     using Org.BouncyCastle.Asn1.Pkcs;
     using Org.BouncyCastle.Asn1.X509;
+    using Org.BouncyCastle.Cms;
     using Org.BouncyCastle.Crypto;
     using Org.BouncyCastle.Crypto.Generators;
     using Org.BouncyCastle.Crypto.Operators;
+    using Org.BouncyCastle.OpenSsl;
     using Org.BouncyCastle.Pkcs;
     using Org.BouncyCastle.Security;
+    using Org.BouncyCastle.X509;
     using Org.BouncyCastle.X509.Extension;
 
     using Spritely.Recipes;
@@ -42,7 +46,7 @@ namespace OBeautifulCode.Security
         /// </summary>
         /// <param name="rsaKeyLength">The length of the rsa key (e.g. 2048 bits)</param>
         /// <returns>
-        /// 
+        /// A RSA asymmetric cipher key pair.
         /// </returns>
         public static AsymmetricCipherKeyPair CreateRsaKeyPair(
             int rsaKeyLength = 2048)
@@ -58,7 +62,7 @@ namespace OBeautifulCode.Security
         /// Creates a certificate signing request for an SSL certificate.
         /// </summary>
         /// <remarks>
-        /// Adapted from: <a href="https://gist.github.com/Venomed/5337717aadfb61b09e58" /> 
+        /// Adapted from: <a href="https://gist.github.com/Venomed/5337717aadfb61b09e58" />
         /// </remarks>
         /// <param name="asymmetricKeyPair">The asymmetric cipher key pair.</param>
         /// <param name="commonName">The common name (e.g. "example.com").</param>
@@ -125,13 +129,13 @@ namespace OBeautifulCode.Security
         /// Creates a certificate signing request.
         /// </summary>
         /// <remarks>
-        /// Adapted from: <a href="https://gist.github.com/Venomed/5337717aadfb61b09e58" /> 
-        /// Adapted from: <a href="http://perfectresolution.com/2011/10/dynamically-creating-a-csr-private-key-in-net/" /> 
+        /// Adapted from: <a href="https://gist.github.com/Venomed/5337717aadfb61b09e58" />
+        /// Adapted from: <a href="http://perfectresolution.com/2011/10/dynamically-creating-a-csr-private-key-in-net/" />
         /// </remarks>
         /// <param name="asymmetricKeyPair">The asymmetric cipher key pair.</param>
         /// <param name="signatureAlgorithm">The algorithm to use for signing.</param>
         /// <param name="attributesInOrder">
-        /// The attributes to use in the subject in the order they should be scanned - 
+        /// The attributes to use in the subject in the order they should be scanned -
         /// from most general (e.g. country) to most specific.
         /// </param>
         /// <param name="extensions">The x509 extensions to apply.</param>
@@ -168,6 +172,34 @@ namespace OBeautifulCode.Security
                 asymmetricKeyPair.Public,
                 new DerSet(new AttributePkcs(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(new X509Extensions(extensionsForCsr)))),
                 asymmetricKeyPair.Private);
+            return result;
+        }
+
+        /// <summary>
+        /// Extracts a certificate chain from PKCS#7 CMS payload encoded in PEM.
+        /// </summary>
+        /// <param name="pemEncodedPayload">The payload containing the PKCS#7 CMS data.</param>
+        /// <remarks>
+        /// The method is expecting a PKCS#7/CMS SignedData structure containing no "content" and zero SignerInfos.
+        /// </remarks>
+        /// <returns>
+        /// The certificate chain contained in the specified payload.
+        /// </returns>
+        public static IList<X509Certificate> ExtractCertChainFromPemEncodedPkcs7Cms(
+            string pemEncodedPayload)
+        {
+            new { pemEncodedPayload }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+
+            IList<X509Certificate> result;
+            using (var stringReader = new StringReader(pemEncodedPayload))
+            {
+                var pemReader = new PemReader(stringReader);
+                var pemObject = pemReader.ReadPemObject();
+                var data = new CmsSignedData(pemObject.Content);
+                var certStore = data.GetCertificates("COLLECTION");
+                result = certStore.GetMatches(null).Cast<X509Certificate>().ToList();
+            }
+
             return result;
         }
 
