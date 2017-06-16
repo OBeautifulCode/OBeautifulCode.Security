@@ -9,7 +9,6 @@ namespace OBeautifulCode.Security.Test
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using System.Text.RegularExpressions;
 
     using FluentAssertions;
 
@@ -180,13 +179,6 @@ namespace OBeautifulCode.Security.Test
                 result = (AsymmetricCipherKeyPair)pemObject;
             }
 
-            return result;
-        }
-
-        private static string RemoveLineBreaks(
-            this string value)
-        {
-            var result = Regex.Replace(value, @"\r\n?|\n", string.Empty);
             return result;
         }
 

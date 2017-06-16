@@ -1,0 +1,20 @@
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="Common.cs" company="OBeautifulCode">
+//   Copyright (c) OBeautifulCode. All rights reserved.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace OBeautifulCode.Security.Test
+{
+    using System.Text.RegularExpressions;
+
+    public static class Common
+    {
+        public static string RemoveLineBreaks(
+            this string value)
+        {
+            var result = Regex.Replace(value, @"\r\n?|\n", string.Empty);
+            return result;
+        }
+    }
+}

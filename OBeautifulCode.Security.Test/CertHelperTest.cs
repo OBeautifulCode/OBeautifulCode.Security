@@ -8,19 +8,10 @@ namespace OBeautifulCode.Security.Test
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
-    using System.Text.RegularExpressions;
 
     using FluentAssertions;
 
     using OBeautifulCode.Reflection;
-
-    using Org.BouncyCastle.Asn1;
-    using Org.BouncyCastle.Crypto;
-    using Org.BouncyCastle.Crypto.Parameters;
-    using Org.BouncyCastle.OpenSsl;
-    using Org.BouncyCastle.Pkcs;
-    using Org.BouncyCastle.X509;
 
     using Xunit;
 
@@ -63,7 +54,7 @@ namespace OBeautifulCode.Security.Test
             var csr = CertHelper.ReadCsrFromPemEncodedString(expected);
 
             // Assert
-            expected.Should().Be(csr.AsPemEncodedString());
+            expected.RemoveLineBreaks().Should().Be(csr.AsPemEncodedString().RemoveLineBreaks());
         }
 
         [Fact]
