@@ -89,7 +89,7 @@
     <Compile Include=".OBeautifulCode.Recipes\OBeautifulCode.AutoFakeItEasy\AutoFakeItEasyBootstrapper.cs" />
     <Compile Include=".OBeautifulCode.Recipes\OBeautifulCode.Reflection\AssemblyHelper.cs" />
     <Compile Include=".OBeautifulCode.Recipes\OBeautifulCode.Reflection\CompressionMethod.cs" />
-    <Compile Include="MyClassTest.cs" />
+    <Compile Include="CertHelperTest.cs" />
     <Compile Include="PemHelperTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

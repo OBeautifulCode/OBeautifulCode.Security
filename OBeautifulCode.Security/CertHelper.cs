@@ -199,6 +199,74 @@ namespace OBeautifulCode.Security
         }
 
         /// <summary>
+        /// Gets the X509 subject attribute values from a certificate signing request.
+        /// </summary>
+        /// <param name="csr">The certificate signing request.</param>
+        /// <returns>
+        /// The X509 subject attribute values indexed by the kind of subject attribute.
+        /// </returns>
+        public static IReadOnlyDictionary<X509SubjectAttributeKind, string> GetX509SubjectAttributes(
+            this Pkcs10CertificationRequest csr)
+        {
+            new { csr }.Must().NotBeNull().OrThrow();
+
+            var subject = csr.GetCertificationRequestInfo().Subject;
+
+            var objectIds = subject.GetOidList();
+            var values = subject.GetValueList();
+
+            var result = new Dictionary<X509SubjectAttributeKind, string>();
+
+            for (int x = 0; x < objectIds.Count; x++)
+            {
+                var derId = objectIds[x] as DerObjectIdentifier;
+                var value = values[x] as string;
+
+                if ((derId != null) && (value != null))
+                {
+                    if (derId.Id == X509Name.C.Id)
+                    {
+                        result.Add(X509SubjectAttributeKind.Country, value);
+                    }
+                    else if (derId.Id == X509Name.O.Id)
+                    {
+                        result.Add(X509SubjectAttributeKind.Organization, value);
+                    }
+                    else if (derId.Id == X509Name.OU.Id)
+                    {
+                        result.Add(X509SubjectAttributeKind.OrganizationalUnit, value);
+                    }
+                    else if (derId.Id == X509Name.T.Id)
+                    {
+                        result.Add(X509SubjectAttributeKind.Title, value);
+                    }
+                    else if (derId.Id == X509Name.CN.Id)
+                    {
+                        result.Add(X509SubjectAttributeKind.CommonName, value);
+                    }
+                    else if (derId.Id == X509Name.Street.Id)
+                    {
+                        result.Add(X509SubjectAttributeKind.Street, value);
+                    }
+                    else if (derId.Id == X509Name.SerialNumber.Id)
+                    {
+                        result.Add(X509SubjectAttributeKind.SerialNumber, value);
+                    }
+                    else if (derId.Id == X509Name.L.Id)
+                    {
+                        result.Add(X509SubjectAttributeKind.Locality, value);
+                    }
+                    else if (derId.Id == X509Name.ST.Id)
+                    {
+                        result.Add(X509SubjectAttributeKind.State, value);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Extracts a certificate chain from PKCS#7 CMS payload encoded in PEM.
         /// </summary>
         /// <param name="pemEncodedPkcs7">The payload containing the PKCS#7 CMS data.</param>
