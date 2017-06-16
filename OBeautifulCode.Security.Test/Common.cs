@@ -8,6 +8,7 @@ namespace OBeautifulCode.Security.Test
 {
     using System.Text.RegularExpressions;
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1724:TypeNamesShouldNotMatchNamespaces", Justification = "This is a good name for the class.")]
     public static class Common
     {
         public static string RemoveLineBreaks(
