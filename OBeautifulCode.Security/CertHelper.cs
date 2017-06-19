@@ -128,6 +128,62 @@ namespace OBeautifulCode.Security
         }
 
         /// <summary>
+        /// Creates a PFX file.
+        /// </summary>
+        /// <remarks>
+        /// adapted from: <a href="https://boredwookie.net/blog/m/bouncy-castle-create-a-basic-certificate" />
+        /// </remarks>
+        /// <param name="certChain">The cert chain.</param>
+        /// <param name="privateKey">The private key.</param>
+        /// <param name="unsecurePassword">The password for the PFX file.</param>
+        /// <param name="pfxFilePath">The path to write the PFX file to.</param>
+        /// <param name="overwrite">
+        /// Determines whether to overwrite a file that already exist at <paramref name="pfxFilePath"/>.
+        /// If false and a file exists at that path, the method will throw.
+        /// </param>
+        /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="privateKey"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="privateKey"/> is not private.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="pfxFilePath"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pfxFilePath"/> is white space.</exception>
+        /// <exception cref="IOException"><paramref name="overwrite"/> is false and there is a file at <paramref name="pfxFilePath"/>.</exception>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Creating a PFX requires lots of types.")]
+        public static void CreatePfxFile(
+            IReadOnlyList<X509Certificate> certChain,
+            AsymmetricKeyParameter privateKey,
+            string unsecurePassword,
+            string pfxFilePath,
+            bool overwrite)
+        {
+            new { certChain }.Must().NotBeNull().And().NotBeEmptyEnumerable<X509Certificate>().OrThrowFirstFailure();
+            new { privateKey }.Must().NotBeNull().OrThrow();
+            new { privateKey.IsPrivate }.Must().BeTrue().OrThrow();
+            new { unsecurePassword }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrow();
+            new { pfxFilePath }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrow();
+
+            var store = new Pkcs12StoreBuilder().Build();
+            var certEntries = new List<X509CertificateEntry>();
+            foreach (var cert in certChain)
+            {
+                var certEntry = new X509CertificateEntry(cert);
+                certEntries.Add(certEntry);
+                store.SetCertificateEntry(cert.GetX509SubjectAttributes()[X509SubjectAttributeKind.CommonName], certEntry);
+            }
+
+            var keyEntry = new AsymmetricKeyEntry(privateKey);
+            store.SetKeyEntry(certChain.First().GetX509SubjectAttributes()[X509SubjectAttributeKind.CommonName], keyEntry, certEntries.ToArray());
+
+            var mode = overwrite ? FileMode.Create : FileMode.CreateNew;
+            using (var fileStream = new FileStream(pfxFilePath, mode, FileAccess.Write, FileShare.None))
+            {
+                store.Save(fileStream, unsecurePassword.ToCharArray(), new SecureRandom());
+            }
+        }
+
+        /// <summary>
         /// Reads a certificate signing request encoded in PEM.
         /// </summary>
         /// <param name="pemEncodedCsr">The PEM encoded certificate signing request.</param>
@@ -260,6 +316,44 @@ namespace OBeautifulCode.Security
 
             var subject = csr.GetCertificationRequestInfo().Subject;
 
+            var result = subject.GetX509SubjectAttributes();
+
+            return result;
+        }
+
+        /// <summary>
+        /// Gets the X509 subject attribute values from a certificate.
+        /// </summary>
+        /// <param name="cert">The certificate.</param>
+        /// <returns>
+        /// The X509 subject attribute values indexed by the kind of subject attribute.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="cert"/> is null.</exception>
+        public static IReadOnlyDictionary<X509SubjectAttributeKind, string> GetX509SubjectAttributes(
+            this X509Certificate cert)
+        {
+            new { cert }.Must().NotBeNull().OrThrow();
+
+            var subject = cert.SubjectDN;
+
+            var result = subject.GetX509SubjectAttributes();
+
+            return result;
+        }
+
+        /// <summary>
+        /// Gets the X509 subject attribute values from a subject.
+        /// </summary>
+        /// <param name="subject">The subject.</param>
+        /// <returns>
+        /// The X509 subject attribute values indexed by the kind of subject attribute.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="subject"/> is null.</exception>
+        public static IReadOnlyDictionary<X509SubjectAttributeKind, string> GetX509SubjectAttributes(
+            this X509Name subject)
+        {
+            new { subject }.Must().NotBeNull().OrThrow();
+
             var objectIds = subject.GetOidList();
             var values = subject.GetValueList();
 
@@ -313,7 +407,7 @@ namespace OBeautifulCode.Security
 
             return result;
         }
-        
+
         /// <summary>
         /// Creates a certificate signing request.
         /// </summary>

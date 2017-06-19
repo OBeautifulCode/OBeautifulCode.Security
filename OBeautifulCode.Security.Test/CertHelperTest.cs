@@ -9,10 +9,15 @@ namespace OBeautifulCode.Security.Test
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
 
     using FluentAssertions;
 
     using OBeautifulCode.Reflection;
+
+    using Org.BouncyCastle.Asn1.X509;
+    using Org.BouncyCastle.Pkcs;
+    using Org.BouncyCastle.X509;
 
     using Xunit;
 
@@ -138,10 +143,10 @@ namespace OBeautifulCode.Security.Test
         }
 
         [Fact]
-        public static void GetX509SubjectAttributes___Should_throw_ArgumentNullException___When_parameter_csr_is_null()
+        public static void GetX509SubjectAttributes_Pkcs10CertificationRequest___Should_throw_ArgumentNullException___When_parameter_csr_is_null()
         {
             // Arrange, Act
-            var ex = Record.Exception(() => CertHelper.GetX509SubjectAttributes(null));
+            var ex = Record.Exception(() => ((Pkcs10CertificationRequest)null).GetX509SubjectAttributes());
 
             // Assert
             // ReSharper disable PossibleNullReferenceException
@@ -151,7 +156,7 @@ namespace OBeautifulCode.Security.Test
         }
 
         [Fact]
-        public static void GetX509SubjectAttributes___Should_return_subject_attribute_values_of_csr___When_called()
+        public static void GetX509SubjectAttributes__Pkcs10CertificationRequest___Should_return_subject_attribute_values_of_csr___When_called()
         {
             // Arrange
             var expected = new Dictionary<X509SubjectAttributeKind, string>
@@ -169,6 +174,81 @@ namespace OBeautifulCode.Security.Test
 
             // Act
             var actual = csr.GetX509SubjectAttributes();
+
+            // Assert
+            actual.Should().BeEquivalentTo(expected);
+        }
+
+        [Fact]
+        public static void GetX509SubjectAttributes_X509Certificate___Should_throw_ArgumentNullException___When_parameter_cert_is_null()
+        {
+            // Arrange, Act
+            var ex = Record.Exception(() => ((X509Certificate)null).GetX509SubjectAttributes());
+
+            // Assert
+            // ReSharper disable PossibleNullReferenceException
+            ex.Should().BeOfType<ArgumentNullException>();
+            ex.Message.Should().Contain("csr");
+            // ReSharper restore PossibleNullReferenceException
+        }
+
+        [Fact]
+        public static void GetX509SubjectAttributes__X509Certificate___Should_return_subject_attribute_values_of_certificiate___When_called()
+        {
+            // Arrange
+            var expected = new Dictionary<X509SubjectAttributeKind, string>
+            {
+                { X509SubjectAttributeKind.CommonName, "Starfield Secure Certificate Authority - G2" },
+                { X509SubjectAttributeKind.Organization, "Starfield Technologies, Inc." },
+                { X509SubjectAttributeKind.OrganizationalUnit, "http://certs.starfieldtech.com/repository/" },
+                { X509SubjectAttributeKind.Locality, "Scottsdale" },
+                { X509SubjectAttributeKind.State, "Arizona" },
+                { X509SubjectAttributeKind.Country, "US" }
+            };
+
+            var certChain = AssemblyHelper.ReadEmbeddedResourceAsString("cert-chain.pem");
+            var cert = CertHelper.ReadCertsFromPemEncodedString(certChain).First();
+
+            // Act
+            var actual = cert.GetX509SubjectAttributes();
+
+            // Assert
+            actual.Should().BeEquivalentTo(expected);
+        }
+
+        [Fact]
+        public static void GetX509SubjectAttributes_X509Name__Should_throw_ArgumentNullException___When_parameter_subject_is_null()
+        {
+            // Arrange, Act
+            var ex = Record.Exception(() => ((X509Name)null).GetX509SubjectAttributes());
+
+            // Assert
+            // ReSharper disable PossibleNullReferenceException
+            ex.Should().BeOfType<ArgumentNullException>();
+            ex.Message.Should().Contain("csr");
+            // ReSharper restore PossibleNullReferenceException
+        }
+
+        [Fact]
+        public static void GetX509SubjectAttributes__X509Name___Should_return_subject_attribute_values_of_subject___When_called()
+        {
+            // Arrange
+            var expected = new Dictionary<X509SubjectAttributeKind, string>
+            {
+                { X509SubjectAttributeKind.CommonName, "example.digicert.com" },
+                { X509SubjectAttributeKind.Organization, "DigiCert Inc." },
+                { X509SubjectAttributeKind.OrganizationalUnit, "DigiCert" },
+                { X509SubjectAttributeKind.Locality, "Lindon" },
+                { X509SubjectAttributeKind.State, "Utah" },
+                { X509SubjectAttributeKind.Country, "US" }
+            };
+
+            var pemEncodedCsr = AssemblyHelper.ReadEmbeddedResourceAsString("csr.pem");
+            var csr = CertHelper.ReadCsrFromPemEncodedString(pemEncodedCsr);
+            var subject = csr.GetCertificationRequestInfo().Subject;
+
+            // Act
+            var actual = subject.GetX509SubjectAttributes();
 
             // Assert
             actual.Should().BeEquivalentTo(expected);
