@@ -193,7 +193,7 @@ namespace OBeautifulCode.Security.Test
         }
 
         [Fact]
-        public static void GetX509SubjectAttributes__X509Certificate___Should_return_subject_attribute_values_of_certificiate___When_called()
+        public static void GetX509SubjectAttributes__X509Certificate___Should_return_subject_attribute_values_of_certificate___When_called()
         {
             // Arrange
             var expected = new Dictionary<X509SubjectAttributeKind, string>
