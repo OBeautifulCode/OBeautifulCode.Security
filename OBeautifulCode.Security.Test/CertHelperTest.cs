@@ -188,7 +188,7 @@ namespace OBeautifulCode.Security.Test
             // Assert
             // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentNullException>();
-            ex.Message.Should().Contain("csr");
+            ex.Message.Should().Contain("cert");
             // ReSharper restore PossibleNullReferenceException
         }
 
@@ -225,7 +225,7 @@ namespace OBeautifulCode.Security.Test
             // Assert
             // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentNullException>();
-            ex.Message.Should().Contain("csr");
+            ex.Message.Should().Contain("subject");
             // ReSharper restore PossibleNullReferenceException
         }
 
