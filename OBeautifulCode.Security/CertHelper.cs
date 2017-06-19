@@ -13,6 +13,7 @@ namespace OBeautifulCode.Security
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Text.RegularExpressions;
 
     using Naos.Recipes.TupleInitializers;
 
@@ -39,6 +40,7 @@ namespace OBeautifulCode.Security
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     [System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Security", "See package version number")]
 #endif
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are a lot of things you can do with certs!  Should really break this up...")]
     internal static class CertHelper
     {
         /// <summary>
@@ -126,62 +128,14 @@ namespace OBeautifulCode.Security
         }
 
         /// <summary>
-        /// Creates a certificate signing request.
-        /// </summary>
-        /// <remarks>
-        /// Adapted from: <a href="https://gist.github.com/Venomed/5337717aadfb61b09e58" />
-        /// Adapted from: <a href="http://perfectresolution.com/2011/10/dynamically-creating-a-csr-private-key-in-net/" />
-        /// </remarks>
-        /// <param name="asymmetricKeyPair">The asymmetric cipher key pair.</param>
-        /// <param name="signatureAlgorithm">The algorithm to use for signing.</param>
-        /// <param name="attributesInOrder">
-        /// The attributes to use in the subject in the order they should be scanned -
-        /// from most general (e.g. country) to most specific.
-        /// </param>
-        /// <param name="extensions">The x509 extensions to apply.</param>
-        /// <returns>
-        /// A certificate signing request.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="asymmetricKeyPair"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="signatureAlgorithm"/> is <see cref="SignatureAlgorithm.None"/>.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="attributesInOrder"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="attributesInOrder"/> is empty.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="extensions"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="extensions"/> is empty.</exception>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
-        public static Pkcs10CertificationRequest CreateCsr(
-            this AsymmetricCipherKeyPair asymmetricKeyPair,
-            SignatureAlgorithm signatureAlgorithm,
-            IReadOnlyList<Tuple<DerObjectIdentifier, string>> attributesInOrder,
-            IReadOnlyDictionary<DerObjectIdentifier, X509Extension> extensions)
-        {
-            new { asymmetricKeyPair }.Must().NotBeNull().OrThrow();
-            new { signatureAlgorithm }.Must().NotBeEqualTo(SignatureAlgorithm.None).OrThrow();
-            new { attributesInOrder }.Must().NotBeNull().And().NotBeEmptyEnumerable<Tuple<DerObjectIdentifier, string>>().OrThrowFirstFailure();
-            new { extensions }.Must().NotBeNull().And().NotBeEmptyEnumerable<KeyValuePair<DerObjectIdentifier, X509Extension>>().OrThrowFirstFailure();
-
-            var signatureFactory = new Asn1SignatureFactory(signatureAlgorithm.ToSignatureAlgorithmString(), asymmetricKeyPair.Private);
-
-            var subject = new X509Name(attributesInOrder.Select(_ => _.Item1).ToList(), attributesInOrder.Select(_ => _.Item2).ToList());
-
-            var extensionsForCsr = extensions.ToDictionary(_ => _.Key, _ => _.Value);
-
-            var result = new Pkcs10CertificationRequest(
-                signatureFactory,
-                subject,
-                asymmetricKeyPair.Public,
-                new DerSet(new AttributePkcs(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(new X509Extensions(extensionsForCsr)))),
-                asymmetricKeyPair.Private);
-            return result;
-        }
-
-        /// <summary>
         /// Reads a certificate signing request encoded in PEM.
         /// </summary>
         /// <param name="pemEncodedCsr">The PEM encoded certificate signing request.</param>
         /// <returns>
         /// The certificate signing request.
         /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedCsr"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pemEncodedCsr"/> is white space.</exception>
         public static Pkcs10CertificationRequest ReadCsrFromPemEncodedString(
             string pemEncodedCsr)
         {
@@ -199,12 +153,106 @@ namespace OBeautifulCode.Security
         }
 
         /// <summary>
+        /// Reads a certificate or certificate chain encoded in PEM.
+        /// </summary>
+        /// <param name="pemEncodedCerts">The PEM encoded certificate or certificate chain.</param>
+        /// <returns>
+        /// The certificate or certificate chain.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedCerts"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pemEncodedCerts"/> is white space.</exception>
+        public static IReadOnlyList<X509Certificate> ReadCertsFromPemEncodedString(
+            string pemEncodedCerts)
+        {
+            new { pemEncodedCerts }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+
+            // remove empty lines - required so that PemReader.ReadObject doesn't return null in-between returning certs
+            pemEncodedCerts = Regex.Replace(pemEncodedCerts, @"^\s*$[\r\n]*", string.Empty, RegexOptions.Multiline);
+
+            var result = new List<X509Certificate>();
+            using (var stringReader = new StringReader(pemEncodedCerts))
+            {
+                var pemReader = new PemReader(stringReader);
+                var certObject = pemReader.ReadObject();
+                while (certObject != null)
+                {
+                    var cert = certObject as X509Certificate;
+                    result.Add(cert);
+                    certObject = pemReader.ReadObject();
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Extracts a certificate chain from PKCS#7 CMS payload encoded in PEM.
+        /// </summary>
+        /// <param name="pemEncodedPkcs7">The payload containing the PKCS#7 CMS data.</param>
+        /// <remarks>
+        /// The method is expecting a PKCS#7/CMS SignedData structure containing no "content" and zero SignerInfos.
+        /// </remarks>
+        /// <returns>
+        /// The certificate chain contained in the specified payload.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedPkcs7"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pemEncodedPkcs7"/> is white space.</exception>
+        public static IReadOnlyList<X509Certificate> ReadCertChainFromPemEncodedPkcs7CmsString(
+            string pemEncodedPkcs7)
+        {
+            new { pemEncodedPkcs7 }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+
+            IReadOnlyList<X509Certificate> result;
+            using (var stringReader = new StringReader(pemEncodedPkcs7))
+            {
+                var pemReader = new PemReader(stringReader);
+                var pemObject = pemReader.ReadPemObject();
+                var data = new CmsSignedData(pemObject.Content);
+                var certStore = data.GetCertificates("COLLECTION");
+                result = certStore.GetMatches(null).Cast<X509Certificate>().ToList();
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Reads a private key encoded in PEM.
+        /// </summary>
+        /// <param name="pemEncodedPrivateKey">The PEM encoded private key.</param>
+        /// <returns>
+        /// The private key.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedPrivateKey"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pemEncodedPrivateKey"/> is white space.</exception>
+        public static AsymmetricKeyParameter ReadPrivateKeyFromPemEncodedString(
+            string pemEncodedPrivateKey)
+        {
+            new { pemEncodedPrivateKey }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+
+            AsymmetricCipherKeyPair keyPair;
+            using (var stringReader = new StringReader(pemEncodedPrivateKey))
+            {
+                var pemReader = new PemReader(stringReader);
+                keyPair = pemReader.ReadObject() as AsymmetricCipherKeyPair;
+            }
+
+            AsymmetricKeyParameter result = null;
+            if (keyPair != null)
+            {
+                result = keyPair.Private;
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Gets the X509 subject attribute values from a certificate signing request.
         /// </summary>
         /// <param name="csr">The certificate signing request.</param>
         /// <returns>
         /// The X509 subject attribute values indexed by the kind of subject attribute.
         /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="csr"/> is null.</exception>
         public static IReadOnlyDictionary<X509SubjectAttributeKind, string> GetX509SubjectAttributes(
             this Pkcs10CertificationRequest csr)
         {
@@ -265,32 +313,54 @@ namespace OBeautifulCode.Security
 
             return result;
         }
-
+        
         /// <summary>
-        /// Extracts a certificate chain from PKCS#7 CMS payload encoded in PEM.
+        /// Creates a certificate signing request.
         /// </summary>
-        /// <param name="pemEncodedPkcs7">The payload containing the PKCS#7 CMS data.</param>
         /// <remarks>
-        /// The method is expecting a PKCS#7/CMS SignedData structure containing no "content" and zero SignerInfos.
+        /// Adapted from: <a href="https://gist.github.com/Venomed/5337717aadfb61b09e58" />
+        /// Adapted from: <a href="http://perfectresolution.com/2011/10/dynamically-creating-a-csr-private-key-in-net/" />
         /// </remarks>
+        /// <param name="asymmetricKeyPair">The asymmetric cipher key pair.</param>
+        /// <param name="signatureAlgorithm">The algorithm to use for signing.</param>
+        /// <param name="attributesInOrder">
+        /// The attributes to use in the subject in the order they should be scanned -
+        /// from most general (e.g. country) to most specific.
+        /// </param>
+        /// <param name="extensions">The x509 extensions to apply.</param>
         /// <returns>
-        /// The certificate chain contained in the specified payload.
+        /// A certificate signing request.
         /// </returns>
-        public static IList<X509Certificate> ExtractCertChainFromPemEncodedPkcs7CmsString(
-            string pemEncodedPkcs7)
+        /// <exception cref="ArgumentNullException"><paramref name="asymmetricKeyPair"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="signatureAlgorithm"/> is <see cref="SignatureAlgorithm.None"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="attributesInOrder"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="attributesInOrder"/> is empty.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="extensions"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="extensions"/> is empty.</exception>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
+        private static Pkcs10CertificationRequest CreateCsr(
+            this AsymmetricCipherKeyPair asymmetricKeyPair,
+            SignatureAlgorithm signatureAlgorithm,
+            IReadOnlyList<Tuple<DerObjectIdentifier, string>> attributesInOrder,
+            IReadOnlyDictionary<DerObjectIdentifier, X509Extension> extensions)
         {
-            new { pemEncodedPkcs7 }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            new { asymmetricKeyPair }.Must().NotBeNull().OrThrow();
+            new { signatureAlgorithm }.Must().NotBeEqualTo(SignatureAlgorithm.None).OrThrow();
+            new { attributesInOrder }.Must().NotBeNull().And().NotBeEmptyEnumerable<Tuple<DerObjectIdentifier, string>>().OrThrowFirstFailure();
+            new { extensions }.Must().NotBeNull().And().NotBeEmptyEnumerable<KeyValuePair<DerObjectIdentifier, X509Extension>>().OrThrowFirstFailure();
 
-            IList<X509Certificate> result;
-            using (var stringReader = new StringReader(pemEncodedPkcs7))
-            {
-                var pemReader = new PemReader(stringReader);
-                var pemObject = pemReader.ReadPemObject();
-                var data = new CmsSignedData(pemObject.Content);
-                var certStore = data.GetCertificates("COLLECTION");
-                result = certStore.GetMatches(null).Cast<X509Certificate>().ToList();
-            }
+            var signatureFactory = new Asn1SignatureFactory(signatureAlgorithm.ToSignatureAlgorithmString(), asymmetricKeyPair.Private);
 
+            var subject = new X509Name(attributesInOrder.Select(_ => _.Item1).ToList(), attributesInOrder.Select(_ => _.Item2).ToList());
+
+            var extensionsForCsr = extensions.ToDictionary(_ => _.Key, _ => _.Value);
+
+            var result = new Pkcs10CertificationRequest(
+                signatureFactory,
+                subject,
+                asymmetricKeyPair.Public,
+                new DerSet(new AttributePkcs(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(new X509Extensions(extensionsForCsr)))),
+                asymmetricKeyPair.Private);
             return result;
         }
 

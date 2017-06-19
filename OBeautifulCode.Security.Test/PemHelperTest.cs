@@ -69,7 +69,7 @@ namespace OBeautifulCode.Security.Test
         {
             // Arrange
             var expected = AssemblyHelper.ReadEmbeddedResourceAsString("private-key.pem");
-            var privateKey = ReadPrivateKeyFromPemEncodedString(expected);
+            var privateKey = CertHelper.ReadPrivateKeyFromPemEncodedString(expected);
 
             // Act
             var actual = privateKey.AsPemEncodedString().RemoveLineBreaks();
@@ -120,10 +120,10 @@ namespace OBeautifulCode.Security.Test
         }
 
         [Fact]
-        public static void AsPemEncodedString_ICollection_of_X509Certificate___Should_throw_ArgumentNullException___When_parameter_certChain_is_null()
+        public static void AsPemEncodedString_IReadOnlyList_of_X509Certificate___Should_throw_ArgumentNullException___When_parameter_certChain_is_null()
         {
             // Arrange, Act
-            var ex = Record.Exception(() => ((ICollection<X509Certificate>)null).AsPemEncodedString());
+            var ex = Record.Exception(() => ((IReadOnlyList<X509Certificate>)null).AsPemEncodedString());
 
             // Assert
             // ReSharper disable PossibleNullReferenceException
@@ -133,25 +133,18 @@ namespace OBeautifulCode.Security.Test
         }
 
         [Fact]
-        public static void AsPemEncodedString_ICollection_of_X509Certificate___Should_return_certificates_encoded_in_PEM___When_called()
+        public static void AsPemEncodedString_IReadOnlyList_of_X509Certificate___Should_return_certificates_encoded_in_PEM___When_called()
         {
             // Arrange
             var pkcs7CertChainInPem = AssemblyHelper.ReadEmbeddedResourceAsString("pkcs7-cert-chain.pem");
             var expected = AssemblyHelper.ReadEmbeddedResourceAsString("cert-chain.pem");
-            var certChain = CertHelper.ExtractCertChainFromPemEncodedPkcs7CmsString(pkcs7CertChainInPem);
+            var certChain = CertHelper.ReadCertChainFromPemEncodedPkcs7CmsString(pkcs7CertChainInPem);
 
             // Act
             var actual = certChain.AsPemEncodedString().RemoveLineBreaks();
 
             // Assert
             actual.Should().Be(expected.RemoveLineBreaks());
-        }
-
-        private static AsymmetricKeyParameter ReadPrivateKeyFromPemEncodedString(
-            string pemEncodedKey)
-        {
-            var result = ReadAsymmetricKeyPairFromPemEncodedString(pemEncodedKey).Private;
-            return result;
         }
 
         private static AsymmetricKeyParameter ReadPublicKeyFromPemEncodedString(

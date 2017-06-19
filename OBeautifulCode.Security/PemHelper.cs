@@ -109,7 +109,7 @@ namespace OBeautifulCode.Security
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
         public static string AsPemEncodedString(
-            this ICollection<X509Certificate> certChain)
+            this IReadOnlyList<X509Certificate> certChain)
         {
             new { certChain }.Must().NotBeNull().OrThrow();
 
