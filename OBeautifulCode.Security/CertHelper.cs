@@ -214,15 +214,15 @@ namespace OBeautifulCode.Security
         }
 
         /// <summary>
-        /// Reads a certificate or certificate chain encoded in PEM.
+        /// Reads a certificate chain encoded in PEM.  The chain may only contain one certificate.
         /// </summary>
-        /// <param name="pemEncodedCerts">The PEM encoded certificate or certificate chain.</param>
+        /// <param name="pemEncodedCerts">The PEM encoded certificate chain.</param>
         /// <returns>
-        /// The certificate or certificate chain.
+        /// The certificate chain.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="pemEncodedCerts"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="pemEncodedCerts"/> is white space.</exception>
-        public static IReadOnlyList<X509Certificate> ReadCertsFromPemEncodedString(
+        public static IReadOnlyList<X509Certificate> ReadCertChainFromPemEncodedString(
             string pemEncodedCerts)
         {
             new { pemEncodedCerts }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();

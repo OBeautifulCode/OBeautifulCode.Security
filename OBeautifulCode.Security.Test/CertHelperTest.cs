@@ -64,10 +64,10 @@ namespace OBeautifulCode.Security.Test
         }
 
         [Fact]
-        public static void ReadCertsFromPemEncodedString___Should_throw_ArgumentNullException___When_parameter_pemEncodedCerts_is_null()
+        public static void ReadCertChainFromPemEncodedString___Should_throw_ArgumentNullException___When_parameter_pemEncodedCerts_is_null()
         {
             // Arrange, Act
-            var ex = Record.Exception(() => CertHelper.ReadCertsFromPemEncodedString(null));
+            var ex = Record.Exception(() => CertHelper.ReadCertChainFromPemEncodedString(null));
 
             // Assert
             // ReSharper disable PossibleNullReferenceException
@@ -77,13 +77,13 @@ namespace OBeautifulCode.Security.Test
         }
 
         [Fact]
-        public static void ReadCertsFromPemEncodedString___Should_roundtrip_to_same_PEM_encoded_string___When_writing_the_cert_chain_to_PEM()
+        public static void ReadCertChainFromPemEncodedString___Should_roundtrip_to_same_PEM_encoded_string___When_writing_the_cert_chain_to_PEM()
         {
             // Arrange
             var expected = AssemblyHelper.ReadEmbeddedResourceAsString("cert-chain.pem");
 
             // Act
-            var actual = CertHelper.ReadCertsFromPemEncodedString(expected);
+            var actual = CertHelper.ReadCertChainFromPemEncodedString(expected);
 
             // Assert
             actual.AsPemEncodedString().RemoveLineBreaks().Should().Be(expected.RemoveLineBreaks());
@@ -207,7 +207,7 @@ namespace OBeautifulCode.Security.Test
             };
 
             var certChain = AssemblyHelper.ReadEmbeddedResourceAsString("cert-chain.pem");
-            var cert = CertHelper.ReadCertsFromPemEncodedString(certChain).First();
+            var cert = CertHelper.ReadCertChainFromPemEncodedString(certChain).First();
 
             // Act
             var actual = cert.GetX509SubjectAttributes();
