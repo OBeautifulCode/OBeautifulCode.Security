@@ -45,99 +45,6 @@ namespace OBeautifulCode.Security
     internal static class CertHelper
     {
         /// <summary>
-        /// Re-orders a certificate chain from lowest to highest level of trust.
-        /// </summary>
-        /// <param name="certChain">The certificate chain to re-order.</param>
-        /// <returns>
-        /// The certificates in the specified chain, ordered from lowest to highest level of trust.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
-        /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
-        public static IReadOnlyList<X509Certificate> OrderCertChainFromLowestToHighestLevelOfTrust(
-            this IReadOnlyCollection<X509Certificate> certChain)
-        {
-            new { certChain }.Must().NotBeNull().And().NotBeEmptyEnumerable<X509Certificate>().OrThrowFirstFailure();
-
-            var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Reverse().ToList();
-            return result;
-        }
-
-        /// <summary>
-        /// Re-orders a certificate chain from highest to lowest level of trust.
-        /// </summary>
-        /// <param name="certChain">The certificate chain to re-order.</param>
-        /// <returns>
-        /// The certificates in the specified chain, ordered from highest to lowest level of trust.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
-        /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "This is a good use of catching general exception types.")]
-        public static IReadOnlyList<X509Certificate> OrderCertChainFromHighestToLowestLevelOfTrust(
-            this IReadOnlyCollection<X509Certificate> certChain)
-        {
-            new { certChain }.Must().NotBeNull().And().NotBeEmptyEnumerable<X509Certificate>().OrThrowFirstFailure();
-
-            certChain = certChain.Distinct().ToList();
-
-            // for every cert, record which other certs verify it
-            var parentCertsByChildCert = new Dictionary<X509Certificate, List<X509Certificate>>();
-            foreach (var cert in certChain)
-            {
-                parentCertsByChildCert.Add(cert, new List<X509Certificate>());
-
-                var otherCerts = certChain.Except(new[] { cert }).ToList();
-                foreach (var otherCert in otherCerts)
-                {
-                    // ReSharper disable EmptyGeneralCatchClause
-                    try
-                    {
-                        cert.Verify(otherCert.GetPublicKey());
-                        parentCertsByChildCert[cert].Add(otherCert);
-                    }
-                    catch (Exception)
-                    {
-                    }
-
-                    // ReSharper restore EmptyGeneralCatchClause
-                }
-            }
-
-            // any cert has two parents?
-            if (parentCertsByChildCert.Values.Any(_ => _.Count > 1))
-            {
-                throw new ArgumentException("the cert chain is malformed");
-            }
-
-            // should only be one cert with no parent
-            if (parentCertsByChildCert.Values.Count(_ => !_.Any()) != 1)
-            {
-                throw new ArgumentException("the cert chain is malformed");
-            }
-
-            // identify and remove the root cert, the remaining certs should have only one parent
-            var rootCert = parentCertsByChildCert.Single(_ => !_.Value.Any()).Key;
-            parentCertsByChildCert.Remove(rootCert);
-
-            // no two certs should have the same parent
-            if (parentCertsByChildCert.SelectMany(_ => _.Value).Distinct().Count() != parentCertsByChildCert.Count)
-            {
-                throw new ArgumentException("the cert chain is malformed");
-            }
-
-            // flip it and index the certs by parent
-            var childCertByParentCert = parentCertsByChildCert.ToDictionary(_ => _.Value.Single(), _ => _.Key);
-            var result = new List<X509Certificate> { rootCert };
-            while (childCertByParentCert.ContainsKey(result.Last()))
-            {
-                result.Add(childCertByParentCert[result.Last()]);
-            }
-
-            return result;
-        }
-
-        /// <summary>
         /// Creates an RSA asymmetric cipher key pair.
         /// </summary>
         /// <param name="rsaKeyLength">The length of the rsa key (e.g. 2048 bits)</param>
@@ -363,6 +270,99 @@ namespace OBeautifulCode.Security
             {
                 var certEntry = store.GetCertificate(alias.ToString());
                 result.Add(certEntry.Certificate);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Re-orders a certificate chain from lowest to highest level of trust.
+        /// </summary>
+        /// <param name="certChain">The certificate chain to re-order.</param>
+        /// <returns>
+        /// The certificates in the specified chain, ordered from lowest to highest level of trust.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
+        public static IReadOnlyList<X509Certificate> OrderCertChainFromLowestToHighestLevelOfTrust(
+            this IReadOnlyCollection<X509Certificate> certChain)
+        {
+            new { certChain }.Must().NotBeNull().And().NotBeEmptyEnumerable<X509Certificate>().OrThrowFirstFailure();
+
+            var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Reverse().ToList();
+            return result;
+        }
+
+        /// <summary>
+        /// Re-orders a certificate chain from highest to lowest level of trust.
+        /// </summary>
+        /// <param name="certChain">The certificate chain to re-order.</param>
+        /// <returns>
+        /// The certificates in the specified chain, ordered from highest to lowest level of trust.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "This is a good use of catching general exception types.")]
+        public static IReadOnlyList<X509Certificate> OrderCertChainFromHighestToLowestLevelOfTrust(
+            this IReadOnlyCollection<X509Certificate> certChain)
+        {
+            new { certChain }.Must().NotBeNull().And().NotBeEmptyEnumerable<X509Certificate>().OrThrowFirstFailure();
+
+            certChain = certChain.Distinct().ToList();
+
+            // for every cert, record which other certs verify it
+            var parentCertsByChildCert = new Dictionary<X509Certificate, List<X509Certificate>>();
+            foreach (var cert in certChain)
+            {
+                parentCertsByChildCert.Add(cert, new List<X509Certificate>());
+
+                var otherCerts = certChain.Except(new[] { cert }).ToList();
+                foreach (var otherCert in otherCerts)
+                {
+                    // ReSharper disable EmptyGeneralCatchClause
+                    try
+                    {
+                        cert.Verify(otherCert.GetPublicKey());
+                        parentCertsByChildCert[cert].Add(otherCert);
+                    }
+                    catch (Exception)
+                    {
+                    }
+
+                    // ReSharper restore EmptyGeneralCatchClause
+                }
+            }
+
+            // any cert has two parents?
+            if (parentCertsByChildCert.Values.Any(_ => _.Count > 1))
+            {
+                throw new ArgumentException("the cert chain is malformed");
+            }
+
+            // should only be one cert with no parent
+            if (parentCertsByChildCert.Values.Count(_ => !_.Any()) != 1)
+            {
+                throw new ArgumentException("the cert chain is malformed");
+            }
+
+            // identify and remove the root cert, the remaining certs should have only one parent
+            var rootCert = parentCertsByChildCert.Single(_ => !_.Value.Any()).Key;
+            parentCertsByChildCert.Remove(rootCert);
+
+            // no two certs should have the same parent
+            if (parentCertsByChildCert.SelectMany(_ => _.Value).Distinct().Count() != parentCertsByChildCert.Count)
+            {
+                throw new ArgumentException("the cert chain is malformed");
+            }
+
+            // flip it and index the certs by parent
+            var childCertByParentCert = parentCertsByChildCert.ToDictionary(_ => _.Value.Single(), _ => _.Key);
+            var result = new List<X509Certificate> { rootCert };
+            while (childCertByParentCert.ContainsKey(result.Last()))
+            {
+                result.Add(childCertByParentCert[result.Last()]);
             }
 
             return result;
