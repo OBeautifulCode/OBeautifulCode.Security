@@ -64,7 +64,7 @@ namespace OBeautifulCode.Security
         /// <summary>
         /// Creates a PFX file.
         /// </summary>
-        /// <param name="certChain">The cert chain.</param>
+        /// <param name="certChain">The cert chain.  The order of the certificates is inconsequential.</param>
         /// <param name="privateKey">The private key.</param>
         /// <param name="unsecurePassword">The password for the PFX file.</param>
         /// <param name="pfxFilePath">The path to write the PFX file to.</param>
@@ -108,7 +108,7 @@ namespace OBeautifulCode.Security
         /// <remarks>
         /// adapted from: <a href="https://boredwookie.net/blog/m/bouncy-castle-create-a-basic-certificate" />
         /// </remarks>
-        /// <param name="certChain">The cert chain.</param>
+        /// <param name="certChain">The cert chain.  The order of the certificates is inconsequential.</param>
         /// <param name="privateKey">The private key.</param>
         /// <param name="unsecurePassword">The password for the PFX file.</param>
         /// <param name="output">The stream to write the PFX file to.</param>
@@ -221,7 +221,7 @@ namespace OBeautifulCode.Security
         /// <param name="input">A byte array of the PFX.</param>
         /// <param name="unsecurePassword">The PFX password in clear-text.</param>
         /// <returns>
-        /// The certificate chain archived in the input PFX.
+        /// The certificate chain archived in the input PFX.  Certs are in no particular order.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
@@ -246,7 +246,7 @@ namespace OBeautifulCode.Security
         /// <param name="input">A stream with the PFX.</param>
         /// <param name="unsecurePassword">The PFX password in clear-text.</param>
         /// <returns>
-        /// The certificate chain archived in the input PFX.
+        /// The certificate chain archived in the input PFX.  Certs are in no particular order.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="input"/> is not readable.</exception>
@@ -263,34 +263,26 @@ namespace OBeautifulCode.Security
             var store = new Pkcs12Store(input, unsecurePassword.ToCharArray());
             var aliases = store.Aliases;
 
-            IReadOnlyList<X509Certificate> result = null;
+            var result = new List<X509Certificate>();
             foreach (var alias in aliases)
             {
-                var certChainEntries = store.GetCertificateChain(alias.ToString());
-                if ((certChainEntries != null) && certChainEntries.Any())
-                {
-                    if (result != null)
-                    {
-                        throw new InvalidOperationException("There are multiple cert chains in the PFX.");
-                    }
-
-                    result = certChainEntries.Select(_ => _.Certificate).ToList();
-                }
+                var certEntry = store.GetCertificate(alias.ToString());
+                result.Add(certEntry.Certificate);
             }
 
             return result;
         }
 
         /// <summary>
-        /// Reads a certificate chain encoded in PEM.
+        /// Reads one or more certs encoded in PEM.
         /// </summary>
-        /// <param name="pemEncodedCerts">The PEM encoded certificate chain.</param>
+        /// <param name="pemEncodedCerts">The PEM encoded certificates.</param>
         /// <returns>
-        /// The certificate chain.
+        /// The certificates.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="pemEncodedCerts"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="pemEncodedCerts"/> is white space.</exception>
-        public static IReadOnlyList<X509Certificate> ReadCertChainFromPemEncodedString(
+        public static IReadOnlyList<X509Certificate> ReadCertsFromPemEncodedString(
             string pemEncodedCerts)
         {
             new { pemEncodedCerts }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
