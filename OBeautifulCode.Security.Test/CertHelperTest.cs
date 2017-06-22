@@ -24,46 +24,6 @@ namespace OBeautifulCode.Security.Test
     public static class CertHelperTest
     {
         [Fact]
-        public static void ReadCsrFromPemEncodedString___Should_throw_ArgumentNullException___When_parameter_pemEncodedCsr_is_null()
-        {
-            // Arrange, Act
-            var ex = Record.Exception(() => CertHelper.ReadCsrFromPemEncodedString(null));
-
-            // Assert
-            // ReSharper disable PossibleNullReferenceException
-            ex.Should().BeOfType<ArgumentNullException>();
-            ex.Message.Should().Contain("pemEncodedCsr");
-            // ReSharper restore PossibleNullReferenceException
-        }
-
-        [Fact]
-        public static void ReadCsrFromPemEncodedString___Should_throw_ArgumentException___When_parameter_pemEncodedCsr_is_white_space()
-        {
-            // Arrange, Act
-            var ex = Record.Exception(() => CertHelper.ReadCsrFromPemEncodedString("  \r\n "));
-
-            // Assert
-            // ReSharper disable PossibleNullReferenceException
-            ex.Should().BeOfType<ArgumentException>();
-            ex.Message.Should().Contain("pemEncodedCsr");
-            ex.Message.Should().Contain("white space");
-            // ReSharper restore PossibleNullReferenceException
-        }
-
-        [Fact]
-        public static void ReadCsrFromPemEncodedString___Should_roundtrip_to_PEM_encoded_CSR___When_called()
-        {
-            // Arrange
-            var expected = AssemblyHelper.ReadEmbeddedResourceAsString("csr.pem");
-
-            // Act
-            var csr = CertHelper.ReadCsrFromPemEncodedString(expected);
-
-            // Assert
-            expected.RemoveLineBreaks().Should().Be(csr.AsPemEncodedString().RemoveLineBreaks());
-        }
-
-        [Fact]
         public static void ReadCertChainFromPemEncodedString___Should_throw_ArgumentNullException___When_parameter_pemEncodedCerts_is_null()
         {
             // Arrange, Act
@@ -117,6 +77,46 @@ namespace OBeautifulCode.Security.Test
         }
 
         [Fact]
+        public static void ReadCsrFromPemEncodedString___Should_throw_ArgumentNullException___When_parameter_pemEncodedCsr_is_null()
+        {
+            // Arrange, Act
+            var ex = Record.Exception(() => CertHelper.ReadCsrFromPemEncodedString(null));
+
+            // Assert
+            // ReSharper disable PossibleNullReferenceException
+            ex.Should().BeOfType<ArgumentNullException>();
+            ex.Message.Should().Contain("pemEncodedCsr");
+            // ReSharper restore PossibleNullReferenceException
+        }
+
+        [Fact]
+        public static void ReadCsrFromPemEncodedString___Should_throw_ArgumentException___When_parameter_pemEncodedCsr_is_white_space()
+        {
+            // Arrange, Act
+            var ex = Record.Exception(() => CertHelper.ReadCsrFromPemEncodedString("  \r\n "));
+
+            // Assert
+            // ReSharper disable PossibleNullReferenceException
+            ex.Should().BeOfType<ArgumentException>();
+            ex.Message.Should().Contain("pemEncodedCsr");
+            ex.Message.Should().Contain("white space");
+            // ReSharper restore PossibleNullReferenceException
+        }
+
+        [Fact]
+        public static void ReadCsrFromPemEncodedString___Should_roundtrip_to_PEM_encoded_CSR___When_called()
+        {
+            // Arrange
+            var expected = AssemblyHelper.ReadEmbeddedResourceAsString("csr.pem");
+
+            // Act
+            var csr = CertHelper.ReadCsrFromPemEncodedString(expected);
+
+            // Assert
+            expected.RemoveLineBreaks().Should().Be(csr.AsPemEncodedString().RemoveLineBreaks());
+        }
+
+        [Fact]
         public static void ReadPrivateKeyFromPemEncodedString___Should_throw_ArgumentNullException___When_parameter_pemEncodedPrivateKey_is_null()
         {
             // Arrange, Act
@@ -140,6 +140,44 @@ namespace OBeautifulCode.Security.Test
 
             // Assert
             actual.AsPemEncodedString().RemoveLineBreaks().Should().Be(expected.RemoveLineBreaks());
+        }
+
+        [Fact]
+        public static void GetX509Field___Should_throw_ArgumentNullException___When_parameter_cert_is_null()
+        {
+            // Arrange, Act
+            var ex = Record.Exception(() => ((X509Certificate)null).GetX509Fields());
+
+            // Assert
+            // ReSharper disable PossibleNullReferenceException
+            ex.Should().BeOfType<ArgumentNullException>();
+            ex.Message.Should().Contain("cert");
+            // ReSharper restore PossibleNullReferenceException
+        }
+
+        [Fact]
+        public static void GetX509Fields___Should_return_field_values_of_certificate___When_called()
+        {
+            // Arrange
+            var expected = new Dictionary<X509FieldKind, string>
+            {
+                { X509FieldKind.IssuerName, "C=US,ST=Arizona,L=Scottsdale,O=Starfield Technologies\\, Inc.,CN=Starfield Root Certificate Authority - G2" },
+                { X509FieldKind.NotAfter, "2031-05-03T07:00:00Z" },
+                { X509FieldKind.NotBefore, "2011-05-03T07:00:00Z" },
+                { X509FieldKind.SerialNumber, "7" },
+                { X509FieldKind.SignatureAlgorithmName, "SHA-256withRSA" },
+                { X509FieldKind.SubjectName, "C=US,ST=Arizona,L=Scottsdale,O=Starfield Technologies\\, Inc.,OU=http://certs.starfieldtech.com/repository/,CN=Starfield Secure Certificate Authority - G2" },
+                { X509FieldKind.Version, "3" }
+            };
+
+            var certChain = AssemblyHelper.ReadEmbeddedResourceAsString("cert-chain.pem");
+            var cert = CertHelper.ReadCertChainFromPemEncodedString(certChain).First();
+
+            // Act
+            var actual = cert.GetX509Fields();
+
+            // Assert
+            actual.Should().BeEquivalentTo(expected);
         }
 
         [Fact]
