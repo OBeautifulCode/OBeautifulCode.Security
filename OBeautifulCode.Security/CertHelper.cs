@@ -276,6 +276,25 @@ namespace OBeautifulCode.Security
         }
 
         /// <summary>
+        /// Gets the end-user certificate in a certificate chain.
+        /// </summary>
+        /// <param name="certChain">The certificate chain.</param>
+        /// <returns>
+        /// The end-user certificate in the specified certificate chain.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
+        public static X509Certificate GetEndUserCertFromCertChain(
+            this IReadOnlyCollection<X509Certificate> certChain)
+        {
+            new { certChain }.Must().NotBeNull().And().NotBeEmptyEnumerable<X509Certificate>().OrThrowFirstFailure();
+
+            var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Last();
+            return result;
+        }
+
+        /// <summary>
         /// Re-orders a certificate chain from lowest to highest level of trust.
         /// </summary>
         /// <param name="certChain">The certificate chain to re-order.</param>
