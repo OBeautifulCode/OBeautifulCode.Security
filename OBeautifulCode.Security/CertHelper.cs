@@ -11,6 +11,7 @@ namespace OBeautifulCode.Security
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
@@ -144,7 +145,7 @@ namespace OBeautifulCode.Security
 
             var keyEntry = new AsymmetricKeyEntry(privateKey);
             store.SetKeyEntry(certChain.First().GetX509SubjectAttributes()[X509SubjectAttributeKind.CommonName], keyEntry, certEntries.ToArray());
-            store.Save(output, unsecurePassword.ToCharArray(), new SecureRandom());            
+            store.Save(output, unsecurePassword.ToCharArray(), new SecureRandom());
         }
 
         /// <summary>
@@ -217,9 +218,11 @@ namespace OBeautifulCode.Security
         /// <summary>
         /// Extracts the certificate chain from a PFX file.
         /// </summary>
-        /// <param name="input"></param>
-        /// <param name="unsecurePassword"></param>
-        /// <returns></returns>
+        /// <param name="input">A stream with the PFX.</param>
+        /// <param name="unsecurePassword">The PFX password in clear-text.</param>
+        /// <returns>
+        /// The certificate chain archived in the input PFX.
+        /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="input"/> is not readable.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
@@ -245,7 +248,7 @@ namespace OBeautifulCode.Security
                     {
                         throw new InvalidOperationException("There are multiple cert chains in the PFX.");
                     }
-                    
+
                     result = certChainEntries.Select(_ => _.Certificate).ToList();
                 }
             }
@@ -254,7 +257,7 @@ namespace OBeautifulCode.Security
         }
 
         /// <summary>
-        /// Reads a certificate chain encoded in PEM.  
+        /// Reads a certificate chain encoded in PEM.
         /// </summary>
         /// <param name="pemEncodedCerts">The PEM encoded certificate chain.</param>
         /// <returns>
@@ -387,12 +390,12 @@ namespace OBeautifulCode.Security
             var result = new Dictionary<X509FieldKind, string>
             {
                 { X509FieldKind.IssuerName, cert.IssuerDN?.ToString() },
-                { X509FieldKind.NotAfter, cert.NotAfter.ToString("yyyy-MM-ddTHH:mm:ssZ") },
-                { X509FieldKind.NotBefore, cert.NotBefore.ToString("yyyy-MM-ddTHH:mm:ssZ") },
+                { X509FieldKind.NotAfter, cert.NotAfter.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture) },
+                { X509FieldKind.NotBefore, cert.NotBefore.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture) },
                 { X509FieldKind.SerialNumber, cert.SerialNumber?.ToString() },
                 { X509FieldKind.SignatureAlgorithmName, cert.SigAlgName },
                 { X509FieldKind.SubjectName, cert.SubjectDN?.ToString() },
-                { X509FieldKind.Version, cert.Version.ToString() }
+                { X509FieldKind.Version, cert.Version.ToString(CultureInfo.InvariantCulture) }
             };
             return result;
         }
