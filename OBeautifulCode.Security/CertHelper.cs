@@ -218,6 +218,31 @@ namespace OBeautifulCode.Security
         /// <summary>
         /// Extracts the certificate chain from a PFX file.
         /// </summary>
+        /// <param name="input">A byte array of the PFX.</param>
+        /// <param name="unsecurePassword">The PFX password in clear-text.</param>
+        /// <returns>
+        /// The certificate chain archived in the input PFX.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
+        public static IReadOnlyList<X509Certificate> ExtractCertChainFromPfx(
+            byte[] input,
+            string unsecurePassword)
+        {
+            new { input }.Must().NotBeNull().OrThrow();
+            new { unsecurePassword }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+
+            using (var inputStream = new MemoryStream(input))
+            {
+                var result = ExtractCertChainFromPfx(inputStream, unsecurePassword);
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// Extracts the certificate chain from a PFX file.
+        /// </summary>
         /// <param name="input">A stream with the PFX.</param>
         /// <param name="unsecurePassword">The PFX password in clear-text.</param>
         /// <returns>
