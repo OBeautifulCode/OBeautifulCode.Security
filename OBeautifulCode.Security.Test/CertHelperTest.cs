@@ -8,7 +8,6 @@ namespace OBeautifulCode.Security.Test
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
     using System.Linq;
 
     using FluentAssertions;
@@ -178,6 +177,34 @@ namespace OBeautifulCode.Security.Test
 
             // Assert
             actual.Should().BeEquivalentTo(expected);
+        }
+
+        [Fact]
+        public static void GetValidityPeriod___Should_throw_ArgumentNullException___When_parameter_cert_is_null()
+        {
+            // Arrange, Act
+            var ex = Record.Exception(() => ((X509Certificate)null).GetValidityPeriod());
+
+            // Assert
+            // ReSharper disable PossibleNullReferenceException
+            ex.Should().BeOfType<ArgumentNullException>();
+            ex.Message.Should().Contain("cert");
+            // ReSharper restore PossibleNullReferenceException
+        }
+
+        [Fact]
+        public static void GetValidityPeriod___Should_return_range_starting_from_NotBefore_and_ending_with_NotAfter___When_called()
+        {
+            // Arrange
+            var certChain = AssemblyHelper.ReadEmbeddedResourceAsString("cert-chain.pem");
+            var cert = CertHelper.ReadCertChainFromPemEncodedString(certChain).First();
+
+            // Act
+            var actual = cert.GetValidityPeriod();
+
+            // Assert
+            actual.StartDateTimeInUtc.Should().Be(new DateTime(2011, 5, 3, 7, 0, 0, DateTimeKind.Utc));
+            actual.EndDateTimeInUtc.Should().Be(new DateTime(2031, 5, 3, 7, 0, 0, DateTimeKind.Utc));
         }
 
         [Fact]

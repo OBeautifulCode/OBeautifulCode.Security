@@ -426,6 +426,24 @@ namespace OBeautifulCode.Security
         }
 
         /// <summary>
+        /// Gets the range of time over which a certificate is valid.
+        /// </summary>
+        /// <param name="cert">The certificate.</param>
+        /// <returns>
+        /// The range of time over which the specified certificate is valid.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="cert"/> is null.</exception>
+        public static DateTimeRange GetValidityPeriod(
+            this X509Certificate cert)
+        {
+            new { cert }.Must().NotBeNull().OrThrow();
+
+            var result = new DateTimeRange(cert.NotBefore, cert.NotAfter);
+            
+            return result;
+        }
+
+        /// <summary>
         /// Gets the X509 subject attribute values from a certificate signing request.
         /// </summary>
         /// <param name="csr">The certificate signing request.</param>
