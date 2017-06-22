@@ -91,6 +91,7 @@
     <Compile Include=".OBeautifulCode.Recipes\OBeautifulCode.Reflection\CompressionMethod.cs" />
     <Compile Include="CertHelperTest.cs" />
     <Compile Include="Common.cs" />
+    <Compile Include="DateTimeRangeTest.cs" />
     <Compile Include="PemHelperTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
