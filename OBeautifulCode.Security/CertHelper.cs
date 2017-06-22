@@ -61,6 +61,62 @@ namespace OBeautifulCode.Security
         }
 
         /// <summary>
+        /// Creates a PFX file.
+        /// </summary>
+        /// <remarks>
+        /// adapted from: <a href="https://boredwookie.net/blog/m/bouncy-castle-create-a-basic-certificate" />
+        /// </remarks>
+        /// <param name="certChain">The cert chain.</param>
+        /// <param name="privateKey">The private key.</param>
+        /// <param name="unsecurePassword">The password for the PFX file.</param>
+        /// <param name="pfxFilePath">The path to write the PFX file to.</param>
+        /// <param name="overwrite">
+        /// Determines whether to overwrite a file that already exist at <paramref name="pfxFilePath"/>.
+        /// If false and a file exists at that path, the method will throw.
+        /// </param>
+        /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="privateKey"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="privateKey"/> is not private.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="pfxFilePath"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pfxFilePath"/> is white space.</exception>
+        /// <exception cref="IOException"><paramref name="overwrite"/> is false and there is a file at <paramref name="pfxFilePath"/>.</exception>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Creating a PFX requires lots of types.")]
+        public static void CreatePfxFile(
+            IReadOnlyList<X509Certificate> certChain,
+            AsymmetricKeyParameter privateKey,
+            string unsecurePassword,
+            string pfxFilePath,
+            bool overwrite)
+        {
+            new { certChain }.Must().NotBeNull().And().NotBeEmptyEnumerable<X509Certificate>().OrThrowFirstFailure();
+            new { privateKey }.Must().NotBeNull().OrThrow();
+            new { privateKey.IsPrivate }.Must().BeTrue().OrThrow();
+            new { unsecurePassword }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrow();
+            new { pfxFilePath }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrow();
+
+            var store = new Pkcs12StoreBuilder().Build();
+            var certEntries = new List<X509CertificateEntry>();
+            foreach (var cert in certChain)
+            {
+                var certEntry = new X509CertificateEntry(cert);
+                certEntries.Add(certEntry);
+                store.SetCertificateEntry(cert.GetX509SubjectAttributes()[X509SubjectAttributeKind.CommonName], certEntry);
+            }
+
+            var keyEntry = new AsymmetricKeyEntry(privateKey);
+            store.SetKeyEntry(certChain.First().GetX509SubjectAttributes()[X509SubjectAttributeKind.CommonName], keyEntry, certEntries.ToArray());
+
+            var mode = overwrite ? FileMode.Create : FileMode.CreateNew;
+            using (var fileStream = new FileStream(pfxFilePath, mode, FileAccess.Write, FileShare.None))
+            {
+                store.Save(fileStream, unsecurePassword.ToCharArray(), new SecureRandom());
+            }
+        }
+
+        /// <summary>
         /// Creates a certificate signing request for an SSL certificate.
         /// </summary>
         /// <remarks>
@@ -128,81 +184,30 @@ namespace OBeautifulCode.Security
         }
 
         /// <summary>
-        /// Creates a PFX file.
+        /// Extracts a certificate chain from PKCS#7 CMS payload encoded in PEM.
         /// </summary>
+        /// <param name="pemEncodedPkcs7">The payload containing the PKCS#7 CMS data.</param>
         /// <remarks>
-        /// adapted from: <a href="https://boredwookie.net/blog/m/bouncy-castle-create-a-basic-certificate" />
+        /// The method is expecting a PKCS#7/CMS SignedData structure containing no "content" and zero SignerInfos.
         /// </remarks>
-        /// <param name="certChain">The cert chain.</param>
-        /// <param name="privateKey">The private key.</param>
-        /// <param name="unsecurePassword">The password for the PFX file.</param>
-        /// <param name="pfxFilePath">The path to write the PFX file to.</param>
-        /// <param name="overwrite">
-        /// Determines whether to overwrite a file that already exist at <paramref name="pfxFilePath"/>.
-        /// If false and a file exists at that path, the method will throw.
-        /// </param>
-        /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="privateKey"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="privateKey"/> is not private.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="pfxFilePath"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="pfxFilePath"/> is white space.</exception>
-        /// <exception cref="IOException"><paramref name="overwrite"/> is false and there is a file at <paramref name="pfxFilePath"/>.</exception>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Creating a PFX requires lots of types.")]
-        public static void CreatePfxFile(
-            IReadOnlyList<X509Certificate> certChain,
-            AsymmetricKeyParameter privateKey,
-            string unsecurePassword,
-            string pfxFilePath,
-            bool overwrite)
-        {
-            new { certChain }.Must().NotBeNull().And().NotBeEmptyEnumerable<X509Certificate>().OrThrowFirstFailure();
-            new { privateKey }.Must().NotBeNull().OrThrow();
-            new { privateKey.IsPrivate }.Must().BeTrue().OrThrow();
-            new { unsecurePassword }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrow();
-            new { pfxFilePath }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrow();
-
-            var store = new Pkcs12StoreBuilder().Build();
-            var certEntries = new List<X509CertificateEntry>();
-            foreach (var cert in certChain)
-            {
-                var certEntry = new X509CertificateEntry(cert);
-                certEntries.Add(certEntry);
-                store.SetCertificateEntry(cert.GetX509SubjectAttributes()[X509SubjectAttributeKind.CommonName], certEntry);
-            }
-
-            var keyEntry = new AsymmetricKeyEntry(privateKey);
-            store.SetKeyEntry(certChain.First().GetX509SubjectAttributes()[X509SubjectAttributeKind.CommonName], keyEntry, certEntries.ToArray());
-
-            var mode = overwrite ? FileMode.Create : FileMode.CreateNew;
-            using (var fileStream = new FileStream(pfxFilePath, mode, FileAccess.Write, FileShare.None))
-            {
-                store.Save(fileStream, unsecurePassword.ToCharArray(), new SecureRandom());
-            }
-        }
-
-        /// <summary>
-        /// Reads a certificate signing request encoded in PEM.
-        /// </summary>
-        /// <param name="pemEncodedCsr">The PEM encoded certificate signing request.</param>
         /// <returns>
-        /// The certificate signing request.
+        /// The certificate chain contained in the specified payload.
         /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedCsr"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="pemEncodedCsr"/> is white space.</exception>
-        public static Pkcs10CertificationRequest ReadCsrFromPemEncodedString(
-            string pemEncodedCsr)
+        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedPkcs7"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pemEncodedPkcs7"/> is white space.</exception>
+        public static IReadOnlyList<X509Certificate> ReadCertChainFromPemEncodedPkcs7CmsString(
+            string pemEncodedPkcs7)
         {
-            new { pemEncodedCsr }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            new { pemEncodedPkcs7 }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
 
-            Pkcs10CertificationRequest result;
-            using (var stringReader = new StringReader(pemEncodedCsr))
+            IReadOnlyList<X509Certificate> result;
+            using (var stringReader = new StringReader(pemEncodedPkcs7))
             {
                 var pemReader = new PemReader(stringReader);
                 var pemObject = pemReader.ReadPemObject();
-                result = new Pkcs10CertificationRequest(pemObject.Content);
+                var data = new CmsSignedData(pemObject.Content);
+                var certStore = data.GetCertificates("COLLECTION");
+                result = certStore.GetMatches(null).Cast<X509Certificate>().ToList();
             }
 
             return result;
@@ -242,30 +247,25 @@ namespace OBeautifulCode.Security
         }
 
         /// <summary>
-        /// Extracts a certificate chain from PKCS#7 CMS payload encoded in PEM.
+        /// Reads a certificate signing request encoded in PEM.
         /// </summary>
-        /// <param name="pemEncodedPkcs7">The payload containing the PKCS#7 CMS data.</param>
-        /// <remarks>
-        /// The method is expecting a PKCS#7/CMS SignedData structure containing no "content" and zero SignerInfos.
-        /// </remarks>
+        /// <param name="pemEncodedCsr">The PEM encoded certificate signing request.</param>
         /// <returns>
-        /// The certificate chain contained in the specified payload.
+        /// The certificate signing request.
         /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedPkcs7"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="pemEncodedPkcs7"/> is white space.</exception>
-        public static IReadOnlyList<X509Certificate> ReadCertChainFromPemEncodedPkcs7CmsString(
-            string pemEncodedPkcs7)
+        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedCsr"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pemEncodedCsr"/> is white space.</exception>
+        public static Pkcs10CertificationRequest ReadCsrFromPemEncodedString(
+            string pemEncodedCsr)
         {
-            new { pemEncodedPkcs7 }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            new { pemEncodedCsr }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
 
-            IReadOnlyList<X509Certificate> result;
-            using (var stringReader = new StringReader(pemEncodedPkcs7))
+            Pkcs10CertificationRequest result;
+            using (var stringReader = new StringReader(pemEncodedCsr))
             {
                 var pemReader = new PemReader(stringReader);
                 var pemObject = pemReader.ReadPemObject();
-                var data = new CmsSignedData(pemObject.Content);
-                var certStore = data.GetCertificates("COLLECTION");
-                result = certStore.GetMatches(null).Cast<X509Certificate>().ToList();
+                result = new Pkcs10CertificationRequest(pemObject.Content);
             }
 
             return result;
