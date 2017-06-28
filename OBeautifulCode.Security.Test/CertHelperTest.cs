@@ -180,6 +180,33 @@ namespace OBeautifulCode.Security.Test
         }
 
         [Fact]
+        public static void GetThumbprint___Should_throw_ArgumentNullException___When_parameter_cert_is_null()
+        {
+            // Arrange, Act
+            var ex = Record.Exception(() => ((X509Certificate)null).GetThumbprint());
+
+            // Assert
+            // ReSharper disable PossibleNullReferenceException
+            ex.Should().BeOfType<ArgumentNullException>();
+            ex.Message.Should().Contain("cert");
+            // ReSharper restore PossibleNullReferenceException
+        }
+
+        [Fact]
+        public static void GetThumbprint___Should_return_thumbprint_of_cert___When_called()
+        {
+            // Arrange
+            var certChain = AssemblyHelper.ReadEmbeddedResourceAsString("cert-chain.pem");
+            var cert = CertHelper.ReadCertsFromPemEncodedString(certChain).First();
+
+            // Act
+            var actual = cert.GetThumbprint();
+
+            // Assert
+            actual.Should().Be("7e dc 37 6d cf d4 5e 6d df 08 2c 16 0d f6 ac 21 83 5b 95 d4");
+        }
+
+        [Fact]
         public static void GetValidityPeriod___Should_throw_ArgumentNullException___When_parameter_cert_is_null()
         {
             // Arrange, Act
