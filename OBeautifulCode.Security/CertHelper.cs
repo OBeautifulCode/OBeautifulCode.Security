@@ -18,6 +18,8 @@ namespace OBeautifulCode.Security
 
     using Naos.Recipes.TupleInitializers;
 
+    using OBeautifulCode.DateTime;
+
     using Org.BouncyCastle.Asn1;
     using Org.BouncyCastle.Asn1.Pkcs;
     using Org.BouncyCastle.Asn1.X509;
@@ -539,12 +541,12 @@ namespace OBeautifulCode.Security
         /// The range of time over which the specified certificate is valid.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="cert"/> is null.</exception>
-        public static DateTimeRange GetValidityPeriod(
+        public static DateTimeRangeInclusive GetValidityPeriod(
             this X509Certificate cert)
         {
             new { cert }.Must().NotBeNull().OrThrow();
 
-            var result = new DateTimeRange(cert.NotBefore, cert.NotAfter);
+            var result = new DateTimeRangeInclusive(cert.NotBefore, cert.NotAfter);
 
             return result;
         }

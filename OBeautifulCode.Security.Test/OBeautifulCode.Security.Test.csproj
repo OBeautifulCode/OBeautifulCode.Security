@@ -61,6 +61,9 @@
       <HintPath>..\packages\OBeautifulCode.AutoFakeItEasy.1.0.84\lib\net45\OBeautifulCode.AutoFakeItEasy.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="OBeautifulCode.DateTime, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OBeautifulCode.DateTime.1.0.2\lib\net45\OBeautifulCode.DateTime.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -91,7 +94,6 @@
     <Compile Include=".OBeautifulCode.Recipes\OBeautifulCode.Reflection\CompressionMethod.cs" />
     <Compile Include="CertHelperTest.cs" />
     <Compile Include="Common.cs" />
-    <Compile Include="DateTimeRangeTest.cs" />
     <Compile Include="PemHelperTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

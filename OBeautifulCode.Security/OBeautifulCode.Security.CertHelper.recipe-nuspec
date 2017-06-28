@@ -9,6 +9,7 @@
       <dependency id="BouncyCastle" version="1.8.1" />
       <dependency id="Spritely.Recipes.MustValidation" version="0.6.2" />
       <dependency id="Naos.Recipes.TupleInitializers" version="1.0.46" />
+      <dependency id="OBeautifulCode.DateTime" version="1.0.2" />
     </dependencies>
   </metadata>
   <files>
@@ -17,6 +18,5 @@
     <file src="SignatureAlgorithm.cs" target="content\net45\.OBeautifulCode.Recipes\OBeautifulCode.Security\SignatureAlgorithm.cs" />
     <file src="X509SubjectAttributeKind.cs" target="content\net45\.OBeautifulCode.Recipes\OBeautifulCode.Security\X509SubjectAttributeKind.cs" />
     <file src="X509FieldKind.cs" target="content\net45\.OBeautifulCode.Recipes\OBeautifulCode.Security\X509FieldKind.cs" />
-    <file src="DateTimeRange.cs" target="content\net45\.OBeautifulCode.Recipes\OBeautifulCode.Security\DateTimeRange.cs" />
   </files>
 </package>
