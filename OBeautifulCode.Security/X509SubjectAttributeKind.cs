@@ -7,7 +7,7 @@
 // </auto-generated>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace OBeautifulCode.Security
+namespace OBeautifulCode.Security.Recipes
 {
     /// <summary>
     /// The kind of attribute contained within the subject of an X509 certificate.

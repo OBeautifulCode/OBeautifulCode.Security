@@ -7,7 +7,7 @@
 // </auto-generated>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace OBeautifulCode.Security
+namespace OBeautifulCode.Security.Recipes
 {
     using System;
     using System.Collections.Generic;

@@ -12,7 +12,8 @@ namespace OBeautifulCode.Security.Test
 
     using FluentAssertions;
 
-    using OBeautifulCode.Reflection;
+    using OBeautifulCode.Reflection.Recipes;
+    using OBeautifulCode.Security.Recipes;
 
     using Org.BouncyCastle.Crypto;
     using Org.BouncyCastle.Crypto.Parameters;
