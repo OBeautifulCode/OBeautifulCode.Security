@@ -69,8 +69,7 @@
   <ItemGroup>
     <AdditionalFiles Include=".analyzers\stylecop.json" />
     <None Include=".analyzers\release.ruleset" />
-    <None Include="OBeautifulCode.Security.Recipes.CertHelper.recipe-nuspec" />
-    <None Include="OBeautifulCode.Security.template-nuspec" />
+    <None Include="CertHelper.recipe-nuspec" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
