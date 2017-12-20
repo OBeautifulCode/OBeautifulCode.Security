@@ -58,6 +58,7 @@
     <Compile Include=".recipes\Spritely.MustValidation\RuleExtensions.cs" />
     <Compile Include=".recipes\Spritely.MustValidation\Rules.cs" />
     <Compile Include=".recipes\Spritely.MustValidation\ValidatedNotNullAttribute.cs" />
+    <Compile Include="AwsCertificateManagerPayload.cs" />
     <Compile Include="CertHelper.cs" />
     <Compile Include="PemHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -91,6 +91,7 @@
     <Compile Include=".recipes\OBeautifulCode.AutoFakeItEasy\AutoFakeItEasyBootstrapper.cs" />
     <Compile Include=".recipes\OBeautifulCode.Reflection\AssemblyHelper.cs" />
     <Compile Include=".recipes\OBeautifulCode.Reflection\CompressionMethod.cs" />
+    <Compile Include="AwsCertificateManagerPayloadTest.cs" />
     <Compile Include="CertHelperTest.cs" />
     <Compile Include="Common.cs" />
     <Compile Include="PemHelperTest.cs" />

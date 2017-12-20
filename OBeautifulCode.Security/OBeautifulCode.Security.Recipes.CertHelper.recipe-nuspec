@@ -18,5 +18,6 @@
     <file src="SignatureAlgorithm.cs" target="content\net45\.recipes\OBeautifulCode.Security\SignatureAlgorithm.cs" />
     <file src="X509SubjectAttributeKind.cs" target="content\net45\.recipes\OBeautifulCode.Security\X509SubjectAttributeKind.cs" />
     <file src="X509FieldKind.cs" target="content\net45\.recipes\OBeautifulCode.Security\X509FieldKind.cs" />
+    <file src="AwsCertificateManagerPayload.cs" target="content\net45\.recipes\OBeautifulCode.Security\AwsCertificateManagerPayload.cs" />
   </files>
 </package>
