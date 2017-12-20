@@ -13,11 +13,11 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="PemHelper.cs" target="content\net45\.recipes\OBeautifulCode.Security\PemHelper.cs" />
-    <file src="CertHelper.cs" target="content\net45\.recipes\OBeautifulCode.Security\CertHelper.cs" />
-    <file src="SignatureAlgorithm.cs" target="content\net45\.recipes\OBeautifulCode.Security\SignatureAlgorithm.cs" />
-    <file src="X509SubjectAttributeKind.cs" target="content\net45\.recipes\OBeautifulCode.Security\X509SubjectAttributeKind.cs" />
-    <file src="X509FieldKind.cs" target="content\net45\.recipes\OBeautifulCode.Security\X509FieldKind.cs" />
-    <file src="AwsCertificateManagerPayload.cs" target="content\net45\.recipes\OBeautifulCode.Security\AwsCertificateManagerPayload.cs" />
+    <file src="PemHelper.cs" target="content\net461\.recipes\OBeautifulCode.Security\PemHelper.cs" />
+    <file src="CertHelper.cs" target="content\net461\.recipes\OBeautifulCode.Security\CertHelper.cs" />
+    <file src="SignatureAlgorithm.cs" target="content\net461\.recipes\OBeautifulCode.Security\SignatureAlgorithm.cs" />
+    <file src="X509SubjectAttributeKind.cs" target="content\net461\.recipes\OBeautifulCode.Security\X509SubjectAttributeKind.cs" />
+    <file src="X509FieldKind.cs" target="content\net461\.recipes\OBeautifulCode.Security\X509FieldKind.cs" />
+    <file src="AwsCertificateManagerPayload.cs" target="content\net461\.recipes\OBeautifulCode.Security\AwsCertificateManagerPayload.cs" />
   </files>
 </package>

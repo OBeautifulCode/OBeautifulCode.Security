@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="PemHelperTest.cs" company="OBeautifulCode">
-//   Copyright (c) OBeautifulCode. All rights reserved.
+//   Copyright (c) OBeautifulCode 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -32,10 +32,8 @@ namespace OBeautifulCode.Security.Test
             var ex = Record.Exception(() => ((Pkcs10CertificationRequest)null).AsPemEncodedString());
 
             // Assert
-            // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentNullException>();
             ex.Message.Should().Contain("csr");
-            // ReSharper restore PossibleNullReferenceException
         }
 
         [Fact]
@@ -59,10 +57,8 @@ namespace OBeautifulCode.Security.Test
             var ex = Record.Exception(() => ((AsymmetricKeyParameter)null).AsPemEncodedString());
 
             // Assert
-            // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentNullException>();
             ex.Message.Should().Contain("key");
-            // ReSharper restore PossibleNullReferenceException
         }
 
         [Fact]
@@ -100,10 +96,8 @@ namespace OBeautifulCode.Security.Test
             var ex = Record.Exception(() => ((AsymmetricCipherKeyPair)null).AsPemEncodedString());
 
             // Assert
-            // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentNullException>();
             ex.Message.Should().Contain("keyPair");
-            // ReSharper restore PossibleNullReferenceException
         }
 
         [Fact]
@@ -127,10 +121,8 @@ namespace OBeautifulCode.Security.Test
             var ex = Record.Exception(() => ((IReadOnlyList<X509Certificate>)null).AsPemEncodedString());
 
             // Assert
-            // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentNullException>();
             ex.Message.Should().Contain("certChain");
-            // ReSharper restore PossibleNullReferenceException
         }
 
         [Fact]
@@ -175,7 +167,5 @@ namespace OBeautifulCode.Security.Test
 
             return result;
         }
-
-        // ReSharper restore InconsistentNaming
     }
 }

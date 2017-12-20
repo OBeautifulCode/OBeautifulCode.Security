@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="CertHelperTest.cs" company="OBeautifulCode">
-//   Copyright (c) OBeautifulCode. All rights reserved.
+//   Copyright (c) OBeautifulCode 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -30,10 +30,8 @@ namespace OBeautifulCode.Security.Test
             var ex = Record.Exception(() => CertHelper.ReadCertsFromPemEncodedString(null));
 
             // Assert
-            // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentNullException>();
             ex.Message.Should().Contain("pemEncodedCerts");
-            // ReSharper restore PossibleNullReferenceException
         }
 
         [Fact]
@@ -56,10 +54,8 @@ namespace OBeautifulCode.Security.Test
             var ex = Record.Exception(() => CertHelper.ReadCertChainFromPemEncodedPkcs7CmsString(null));
 
             // Assert
-            // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentNullException>();
             ex.Message.Should().Contain("pemEncodedPkcs7");
-            // ReSharper restore PossibleNullReferenceException
         }
 
         [Fact]
@@ -83,10 +79,8 @@ namespace OBeautifulCode.Security.Test
             var ex = Record.Exception(() => CertHelper.ReadCsrFromPemEncodedString(null));
 
             // Assert
-            // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentNullException>();
             ex.Message.Should().Contain("pemEncodedCsr");
-            // ReSharper restore PossibleNullReferenceException
         }
 
         [Fact]
@@ -96,11 +90,9 @@ namespace OBeautifulCode.Security.Test
             var ex = Record.Exception(() => CertHelper.ReadCsrFromPemEncodedString("  \r\n "));
 
             // Assert
-            // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentException>();
             ex.Message.Should().Contain("pemEncodedCsr");
             ex.Message.Should().Contain("white space");
-            // ReSharper restore PossibleNullReferenceException
         }
 
         [Fact]
@@ -123,10 +115,8 @@ namespace OBeautifulCode.Security.Test
             var ex = Record.Exception(() => CertHelper.ReadPrivateKeyFromPemEncodedString(null));
 
             // Assert
-            // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentNullException>();
             ex.Message.Should().Contain("pemEncodedPrivateKe");
-            // ReSharper restore PossibleNullReferenceException
         }
 
         [Fact]
@@ -149,10 +139,8 @@ namespace OBeautifulCode.Security.Test
             var ex = Record.Exception(() => ((X509Certificate)null).GetX509Fields());
 
             // Assert
-            // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentNullException>();
             ex.Message.Should().Contain("cert");
-            // ReSharper restore PossibleNullReferenceException
         }
 
         [Fact]
@@ -167,7 +155,7 @@ namespace OBeautifulCode.Security.Test
                 { X509FieldKind.SerialNumber, "7" },
                 { X509FieldKind.SignatureAlgorithmName, "SHA-256withRSA" },
                 { X509FieldKind.SubjectName, "C=US,ST=Arizona,L=Scottsdale,O=Starfield Technologies\\, Inc.,OU=http://certs.starfieldtech.com/repository/,CN=Starfield Secure Certificate Authority - G2" },
-                { X509FieldKind.Version, "3" }
+                { X509FieldKind.Version, "3" },
             };
 
             var certChain = AssemblyHelper.ReadEmbeddedResourceAsString("cert-chain.pem");
@@ -187,10 +175,8 @@ namespace OBeautifulCode.Security.Test
             var ex = Record.Exception(() => ((X509Certificate)null).GetThumbprint());
 
             // Assert
-            // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentNullException>();
             ex.Message.Should().Contain("cert");
-            // ReSharper restore PossibleNullReferenceException
         }
 
         [Fact]
@@ -214,10 +200,8 @@ namespace OBeautifulCode.Security.Test
             var ex = Record.Exception(() => ((X509Certificate)null).GetValidityPeriod());
 
             // Assert
-            // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentNullException>();
             ex.Message.Should().Contain("cert");
-            // ReSharper restore PossibleNullReferenceException
         }
 
         [Fact]
@@ -242,10 +226,8 @@ namespace OBeautifulCode.Security.Test
             var ex = Record.Exception(() => ((Pkcs10CertificationRequest)null).GetX509SubjectAttributes());
 
             // Assert
-            // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentNullException>();
             ex.Message.Should().Contain("csr");
-            // ReSharper restore PossibleNullReferenceException
         }
 
         [Fact]
@@ -259,7 +241,7 @@ namespace OBeautifulCode.Security.Test
                 { X509SubjectAttributeKind.OrganizationalUnit, "DigiCert" },
                 { X509SubjectAttributeKind.Locality, "Lindon" },
                 { X509SubjectAttributeKind.State, "Utah" },
-                { X509SubjectAttributeKind.Country, "US" }
+                { X509SubjectAttributeKind.Country, "US" },
             };
 
             var pemEncodedCsr = AssemblyHelper.ReadEmbeddedResourceAsString("csr.pem");
@@ -279,10 +261,8 @@ namespace OBeautifulCode.Security.Test
             var ex = Record.Exception(() => ((X509Certificate)null).GetX509SubjectAttributes());
 
             // Assert
-            // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentNullException>();
             ex.Message.Should().Contain("cert");
-            // ReSharper restore PossibleNullReferenceException
         }
 
         [Fact]
@@ -296,7 +276,7 @@ namespace OBeautifulCode.Security.Test
                 { X509SubjectAttributeKind.OrganizationalUnit, "http://certs.starfieldtech.com/repository/" },
                 { X509SubjectAttributeKind.Locality, "Scottsdale" },
                 { X509SubjectAttributeKind.State, "Arizona" },
-                { X509SubjectAttributeKind.Country, "US" }
+                { X509SubjectAttributeKind.Country, "US" },
             };
 
             var certChain = AssemblyHelper.ReadEmbeddedResourceAsString("cert-chain.pem");
@@ -316,10 +296,8 @@ namespace OBeautifulCode.Security.Test
             var ex = Record.Exception(() => ((X509Name)null).GetX509SubjectAttributes());
 
             // Assert
-            // ReSharper disable PossibleNullReferenceException
             ex.Should().BeOfType<ArgumentNullException>();
             ex.Message.Should().Contain("subject");
-            // ReSharper restore PossibleNullReferenceException
         }
 
         [Fact]
@@ -333,7 +311,7 @@ namespace OBeautifulCode.Security.Test
                 { X509SubjectAttributeKind.OrganizationalUnit, "DigiCert" },
                 { X509SubjectAttributeKind.Locality, "Lindon" },
                 { X509SubjectAttributeKind.State, "Utah" },
-                { X509SubjectAttributeKind.Country, "US" }
+                { X509SubjectAttributeKind.Country, "US" },
             };
 
             var pemEncodedCsr = AssemblyHelper.ReadEmbeddedResourceAsString("csr.pem");
@@ -346,7 +324,5 @@ namespace OBeautifulCode.Security.Test
             // Assert
             actual.Should().BeEquivalentTo(expected);
         }
-
-        // ReSharper restore InconsistentNaming
     }
 }
