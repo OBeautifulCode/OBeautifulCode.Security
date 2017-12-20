@@ -23,6 +23,12 @@
       <!-- Describes a boolean -->
       <Word>bool</Word>
 
+      <!-- Acronym for Cryptographic Message Syntax -->
+      <Word>CMS</Word>
+
+      <!-- Acronym for Certificate Signing Request -->
+      <Word>CSR</Word>
+
       <!-- A piece of data. -->
       <Word>datapoint</Word>
       <Word>datapoints</Word>
@@ -74,6 +80,9 @@
       and it's associated certificate chain. 
       -->
       <Word>PFX</Word>
+
+      <!-- Acronym for Public Key Cryptography Standards -->
+      <Word>PKCS</Word>
 
       <!-- Acronym for Secure Hash Algorithm. -->
       <Word>SHA</Word>
