@@ -298,6 +298,26 @@ namespace OBeautifulCode.Security.Recipes
         }
 
         /// <summary>
+        /// Gets the intermediate certificate chain from a certificate chain that contains
+        /// the end-user certificate.
+        /// </summary>
+        /// <param name="certChain">The certificate chain.</param>
+        /// <returns>
+        /// The intermediate cert chain.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
+        public static IReadOnlyList<X509Certificate> GetIntermediateChainFromCertChain(
+            this IReadOnlyCollection<X509Certificate> certChain)
+        {
+            new { certChain }.Must().NotBeNull().And().NotBeEmptyEnumerable<X509Certificate>().OrThrowFirstFailure();
+            
+            var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Take(certChain.Count - 1).ToList();
+            return result;
+        }
+
+        /// <summary>
         /// Re-orders a certificate chain from lowest to highest level of trust.
         /// </summary>
         /// <param name="certChain">The certificate chain to re-order.</param>
