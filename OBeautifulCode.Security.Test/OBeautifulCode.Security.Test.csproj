@@ -93,6 +93,7 @@
     <Compile Include="AwsCertificateManagerPayloadTest.cs" />
     <Compile Include="CertHelperTest.cs" />
     <Compile Include="Common.cs" />
+    <Compile Include="ExtractedPfxFileTest.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="PemHelperTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

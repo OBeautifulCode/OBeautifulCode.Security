@@ -59,6 +59,7 @@
     <Compile Include=".recipes\Spritely.MustValidation\ValidatedNotNullAttribute.cs" />
     <Compile Include="AwsCertificateManagerPayload.cs" />
     <Compile Include="CertHelper.cs" />
+    <Compile Include="ExtractedPfxFile.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="PemHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

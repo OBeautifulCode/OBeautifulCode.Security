@@ -22,7 +22,10 @@ namespace OBeautifulCode.Security.Recipes
         /// <param name="certificateBody">The PEM-encoded end-user certificate.</param>
         /// <param name="certificatePrivateKey">The PEM-encoded private key.</param>
         /// <param name="certificateChain">The PEM-encoded intermediate certificate chain.</param>
-        public AwsCertificateManagerPayload(string certificateBody, string certificatePrivateKey, string certificateChain)
+        public AwsCertificateManagerPayload(
+            string certificateBody, 
+            string certificatePrivateKey, 
+            string certificateChain)
         {
             new { certificateBody }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
             new { certificatePrivateKey }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();

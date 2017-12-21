@@ -19,5 +19,6 @@
     <file src="X509SubjectAttributeKind.cs" target="content\net461\.recipes\OBeautifulCode.Security\X509SubjectAttributeKind.cs" />
     <file src="X509FieldKind.cs" target="content\net461\.recipes\OBeautifulCode.Security\X509FieldKind.cs" />
     <file src="AwsCertificateManagerPayload.cs" target="content\net461\.recipes\OBeautifulCode.Security\AwsCertificateManagerPayload.cs" />
+    <file src="ExtractedPfxFile.cs" target="content\net461\.recipes\OBeautifulCode.Security\ExtractedPfxFile.cs" />
   </files>
 </package>
