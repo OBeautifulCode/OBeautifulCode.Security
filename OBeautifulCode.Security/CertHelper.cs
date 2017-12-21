@@ -704,6 +704,32 @@ namespace OBeautifulCode.Security.Recipes
         }
 
         /// <summary>
+        /// Creates an AWS Certificate Manager payload from a PFX file.
+        /// </summary>
+        /// <param name="input">A byte array of the PFX.</param>
+        /// <param name="unsecurePassword">The PFX password in clear-text.</param>
+        /// <returns>
+        /// A payload that can be used to load certs into the AWS Certificate Manager via the console.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
+        public static AwsCertificateManagerPayload CreateAwsCertificateManagerPayloadFromPfx(
+            byte[] input,
+            string unsecurePassword)
+        {
+            new { input }.Must().NotBeNull().OrThrow();
+            new { unsecurePassword }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+
+            var extractedPfxFile = ExtractCryptographicObjectsFromPfxFile(input, unsecurePassword);
+            var endUserCertificate = extractedPfxFile.CertificateChain.GetEndUserCertFromCertChain();
+            var intermediateCertChain = extractedPfxFile.CertificateChain.GetIntermediateChainFromCertChain();
+            
+            var result = new AwsCertificateManagerPayload(endUserCertificate.AsPemEncodedString(), extractedPfxFile.PrivateKey.AsPemEncodedString(), intermediateCertChain.AsPemEncodedString());
+            return result;
+        }
+        
+        /// <summary>
         /// Creates a certificate signing request.
         /// </summary>
         /// <remarks>
