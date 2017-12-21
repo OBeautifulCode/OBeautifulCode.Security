@@ -221,17 +221,17 @@ namespace OBeautifulCode.Security.Recipes
         }
 
         /// <summary>
-        /// Extracts the certificate chain from a PFX file.
+        /// Extracts the cryptographic objects contained in a PFX file.
         /// </summary>
         /// <param name="input">A byte array of the PFX.</param>
         /// <param name="unsecurePassword">The PFX password in clear-text.</param>
         /// <returns>
-        /// The certificate chain archived in the input PFX.  Certs are in no particular order.
+        /// The cryptographic objects contained in the specified PFX file.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
-        public static IReadOnlyCollection<X509Certificate> ExtractCertChainFromPfx(
+        public static ExtractedPfxFile ExtractCryptographicObjectsFromPfxFile(
             byte[] input,
             string unsecurePassword)
         {
@@ -240,24 +240,24 @@ namespace OBeautifulCode.Security.Recipes
 
             using (var inputStream = new MemoryStream(input))
             {
-                var result = ExtractCertChainFromPfx(inputStream, unsecurePassword);
+                var result = ExtractCryptographicObjectsFromPfxFile(inputStream, unsecurePassword);
                 return result;
             }
         }
 
         /// <summary>
-        /// Extracts the certificate chain from a PFX file.
+        /// Extracts the cryptographic objects contained in a PFX file.
         /// </summary>
         /// <param name="input">A stream with the PFX.</param>
         /// <param name="unsecurePassword">The PFX password in clear-text.</param>
         /// <returns>
-        /// The certificate chain archived in the input PFX.  Certs are in no particular order.
+        /// The cryptographic objects contained in the specified PFX file.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="input"/> is not readable.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
-        public static IReadOnlyCollection<X509Certificate> ExtractCertChainFromPfx(
+        public static ExtractedPfxFile ExtractCryptographicObjectsFromPfxFile(
             Stream input,
             string unsecurePassword)
         {
@@ -268,13 +268,17 @@ namespace OBeautifulCode.Security.Recipes
             var store = new Pkcs12Store(input, unsecurePassword.ToCharArray());
             var aliases = store.Aliases;
 
-            var result = new List<X509Certificate>();
+            var certificateChain = new List<X509Certificate>();
             foreach (var alias in aliases)
             {
                 var certEntry = store.GetCertificate(alias.ToString());
-                result.Add(certEntry.Certificate);
+                certificateChain.Add(certEntry.Certificate);
             }
 
+            var endUserCertificate = certificateChain.GetEndUserCertFromCertChain();
+            var privateKey = store.GetKey(endUserCertificate.GetX509SubjectAttributes()[X509SubjectAttributeKind.CommonName]).Key;
+
+            var result = new ExtractedPfxFile(certificateChain, privateKey);
             return result;
         }
 
