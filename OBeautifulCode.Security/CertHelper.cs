@@ -40,7 +40,6 @@ namespace OBeautifulCode.Security.Recipes
     /// Provides helpers methods for dealing with certificates.
     /// </summary>
 #if !OBeautifulCodeSecurityRecipesProject
-    [System.Diagnostics.DebuggerStepThrough]
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     [System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Security", "See package version number")]
 #endif

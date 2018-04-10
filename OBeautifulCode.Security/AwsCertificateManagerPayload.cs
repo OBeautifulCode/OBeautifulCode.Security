@@ -14,7 +14,11 @@ namespace OBeautifulCode.Security.Recipes
     /// <summary>
     /// Container for payload require to load certificates into the AWS Certificate Manager.
     /// </summary>
-    public class AwsCertificateManagerPayload
+#if !OBeautifulCodeSecurityRecipesProject
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Security", "See package version number")]
+#endif
+    internal class AwsCertificateManagerPayload
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="AwsCertificateManagerPayload"/> class.

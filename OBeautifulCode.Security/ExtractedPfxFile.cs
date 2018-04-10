@@ -19,7 +19,11 @@ namespace OBeautifulCode.Security.Recipes
     /// <summary>
     /// Represents cryptographic objects extracted from a PFX file.
     /// </summary>
-    public class ExtractedPfxFile
+#if !OBeautifulCodeSecurityRecipesProject
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Security", "See package version number")]
+#endif
+    internal class ExtractedPfxFile
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ExtractedPfxFile"/> class.
