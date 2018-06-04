@@ -6,19 +6,19 @@
     <tags>certificate signing request csr rsa asymmetric key pem</tags>
     <iconUrl>https://raw.githubusercontent.com/OBeautifulCode/OBeautifulCode.Security/master/OBeautifulCode.Security/nuget-icon.png</iconUrl>
     <dependencies>
-      <dependency id="BouncyCastle" version="1.8.1" />
-      <dependency id="Spritely.Recipes.MustValidation" version="0.6.3" />
-      <dependency id="Naos.Recipes.TupleInitializers" version="1.0.56" />
-      <dependency id="OBeautifulCode.DateTime" version="1.0.4" />
+      <dependency id="BouncyCastle" version="1.8.2" />
+      <dependency id="OBeautifulCode.Validation.Recipes.ParameterValidator" version="1.0.13" />
+      <dependency id="Naos.Recipes.TupleInitializers" version="1.0.88" />
+      <dependency id="OBeautifulCode.DateTime" version="1.0.6" />
     </dependencies>
   </metadata>
   <files>
-    <file src="PemHelper.cs" target="content\net461\.recipes\OBeautifulCode.Security\PemHelper.cs" />
-    <file src="CertHelper.cs" target="content\net461\.recipes\OBeautifulCode.Security\CertHelper.cs" />
-    <file src="SignatureAlgorithm.cs" target="content\net461\.recipes\OBeautifulCode.Security\SignatureAlgorithm.cs" />
-    <file src="X509SubjectAttributeKind.cs" target="content\net461\.recipes\OBeautifulCode.Security\X509SubjectAttributeKind.cs" />
-    <file src="X509FieldKind.cs" target="content\net461\.recipes\OBeautifulCode.Security\X509FieldKind.cs" />
-    <file src="AwsCertificateManagerPayload.cs" target="content\net461\.recipes\OBeautifulCode.Security\AwsCertificateManagerPayload.cs" />
-    <file src="ExtractedPfxFile.cs" target="content\net461\.recipes\OBeautifulCode.Security\ExtractedPfxFile.cs" />
+    <file src="PemHelper.cs" target="content\net462\.recipes\OBeautifulCode.Security\PemHelper.cs" />
+    <file src="CertHelper.cs" target="content\net462\.recipes\OBeautifulCode.Security\CertHelper.cs" />
+    <file src="SignatureAlgorithm.cs" target="content\net462\.recipes\OBeautifulCode.Security\SignatureAlgorithm.cs" />
+    <file src="X509SubjectAttributeKind.cs" target="content\net462\.recipes\OBeautifulCode.Security\X509SubjectAttributeKind.cs" />
+    <file src="X509FieldKind.cs" target="content\net462\.recipes\OBeautifulCode.Security\X509FieldKind.cs" />
+    <file src="AwsCertificateManagerPayload.cs" target="content\net462\.recipes\OBeautifulCode.Security\AwsCertificateManagerPayload.cs" />
+    <file src="ExtractedPfxFile.cs" target="content\net462\.recipes\OBeautifulCode.Security\ExtractedPfxFile.cs" />
   </files>
 </package>
