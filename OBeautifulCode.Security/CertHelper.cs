@@ -659,10 +659,7 @@ namespace OBeautifulCode.Security.Recipes
 
             for (int x = 0; x < objectIds.Count; x++)
             {
-                var derId = objectIds[x] as DerObjectIdentifier;
-                var value = values[x] as string;
-
-                if ((derId != null) && (value != null))
+                if ((objectIds[x] is DerObjectIdentifier derId) && (values[x] is string value))
                 {
                     if (derId.Id == X509Name.C.Id)
                     {

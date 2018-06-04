@@ -23,6 +23,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <summary>
         /// Unknown (default) field.
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         Unknown,
 
         /// <summary>

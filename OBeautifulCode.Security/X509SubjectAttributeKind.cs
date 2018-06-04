@@ -22,6 +22,7 @@ namespace OBeautifulCode.Security.Recipes
     {
 #pragma warning disable CS1591
 #pragma warning disable SA1602
+        // ReSharper disable once UnusedMember.Global
         Unknown,
 
         Country,
