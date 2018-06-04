@@ -64,7 +64,7 @@ namespace OBeautifulCode.Security.Test
             // Assert
             ex.Should().BeOfType<ArgumentException>();
             ex.Message.Should().Contain("certificateChain");
-            ex.Message.Should().Contain("contain any null");
+            ex.Message.Should().Contain("contains at least one null element");
         }
 
         [Fact]

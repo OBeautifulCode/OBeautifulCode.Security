@@ -11,10 +11,10 @@ namespace OBeautifulCode.Security.Recipes
 {
     using System.Collections.Generic;
 
+    using OBeautifulCode.Validation.Recipes;
+
     using Org.BouncyCastle.Crypto;
     using Org.BouncyCastle.X509;
-
-    using Spritely.Recipes;
 
     /// <summary>
     /// Represents cryptographic objects extracted from a PFX file.
@@ -37,8 +37,8 @@ namespace OBeautifulCode.Security.Recipes
             IReadOnlyList<X509Certificate> certificateChain,
             AsymmetricKeyParameter privateKey)
         {
-            new { certificateChain }.Must().NotBeNull().And().NotBeEmptyEnumerable<X509Certificate>().And().NotContainAnyNulls<X509Certificate>().OrThrowFirstFailure();
-            new { privateKey }.Must().NotBeNull().OrThrow();
+            new { certificateChain }.Must().NotBeNullNorEmptyNorContainAnyNulls();
+            new { privateKey }.Must().NotBeNull();
 
             this.CertificateChain = certificateChain;
             this.PrivateKey = privateKey;

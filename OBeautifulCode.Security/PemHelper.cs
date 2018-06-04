@@ -15,12 +15,12 @@ namespace OBeautifulCode.Security.Recipes
     using System.IO;
     using System.Text;
 
+    using OBeautifulCode.Validation.Recipes;
+
     using Org.BouncyCastle.Crypto;
     using Org.BouncyCastle.OpenSsl;
     using Org.BouncyCastle.Pkcs;
     using Org.BouncyCastle.X509;
-
-    using Spritely.Recipes;
 
     /// <summary>
     /// Contains helper methods for creating PEM encoded data.
@@ -45,7 +45,7 @@ namespace OBeautifulCode.Security.Recipes
         public static string AsPemEncodedString(
             this Pkcs10CertificationRequest csr)
         {
-            new { csr }.Must().NotBeNull().OrThrow();
+            new { csr }.Must().NotBeNull();
 
             var result = EncodeAsPem(csr);
             return result;
@@ -62,7 +62,7 @@ namespace OBeautifulCode.Security.Recipes
         public static string AsPemEncodedString(
             this AsymmetricCipherKeyPair keyPair)
         {
-            new { keyPair }.Must().NotBeNull().OrThrow();
+            new { keyPair }.Must().NotBeNull();
 
             var result = EncodeAsPem(keyPair);
             return result;
@@ -79,7 +79,7 @@ namespace OBeautifulCode.Security.Recipes
         public static string AsPemEncodedString(
             this AsymmetricKeyParameter key)
         {
-            new { key }.Must().NotBeNull().OrThrow();
+            new { key }.Must().NotBeNull();
 
             var result = EncodeAsPem(key);
             return result;
@@ -96,7 +96,7 @@ namespace OBeautifulCode.Security.Recipes
         public static string AsPemEncodedString(
             this X509Certificate cert)
         {
-            new { cert }.Must().NotBeNull().OrThrow();
+            new { cert }.Must().NotBeNull();
 
             var result = EncodeAsPem(cert);
             return result;
@@ -113,7 +113,7 @@ namespace OBeautifulCode.Security.Recipes
         public static string AsPemEncodedString(
             this IReadOnlyList<X509Certificate> certChain)
         {
-            new { certChain }.Must().NotBeNull().OrThrow();
+            new { certChain }.Must().NotBeNull();
 
             var stringBuilder = new StringBuilder();
             foreach (var cert in certChain)
@@ -129,7 +129,7 @@ namespace OBeautifulCode.Security.Recipes
         private static string EncodeAsPem(
             object item)
         {
-            new { item }.Must().NotBeNull().OrThrow();
+            new { item }.Must().NotBeNull();
 
             string result;
             var stringBuilder = new StringBuilder();

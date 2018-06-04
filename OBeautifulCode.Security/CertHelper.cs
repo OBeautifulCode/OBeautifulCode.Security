@@ -20,6 +20,7 @@ namespace OBeautifulCode.Security.Recipes
     using Naos.Recipes.TupleInitializers;
 
     using OBeautifulCode.DateTime;
+    using OBeautifulCode.Validation.Recipes;
 
     using Org.BouncyCastle.Asn1;
     using Org.BouncyCastle.Asn1.Pkcs;
@@ -33,8 +34,6 @@ namespace OBeautifulCode.Security.Recipes
     using Org.BouncyCastle.Security;
     using Org.BouncyCastle.X509;
     using Org.BouncyCastle.X509.Extension;
-
-    using Spritely.Recipes;
 
     /// <summary>
     /// Provides helpers methods for dealing with certificates.
@@ -79,6 +78,7 @@ namespace OBeautifulCode.Security.Recipes
         /// </param>
         /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="privateKey"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="privateKey"/> is not private.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
@@ -94,11 +94,11 @@ namespace OBeautifulCode.Security.Recipes
             string pfxFilePath,
             bool overwrite)
         {
-            new { certChain }.Must().NotBeNull().And().NotBeEmptyEnumerable<X509Certificate>().OrThrowFirstFailure();
-            new { privateKey }.Must().NotBeNull().OrThrow();
-            new { privateKey.IsPrivate }.Must().BeTrue().OrThrow();
-            new { unsecurePassword }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
-            new { pfxFilePath }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            new { certChain }.Must().NotBeNullNorEmptyNorContainAnyNulls();
+            new { privateKey }.Must().NotBeNull();
+            new { privateKey.IsPrivate }.Must().BeTrue();
+            new { unsecurePassword }.Must().NotBeNullNorWhiteSpace();
+            new { pfxFilePath }.Must().NotBeNullNorWhiteSpace();
 
             var mode = overwrite ? FileMode.Create : FileMode.CreateNew;
             using (var fileStream = new FileStream(pfxFilePath, mode, FileAccess.Write, FileShare.None))
@@ -119,6 +119,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <param name="output">The stream to write the PFX file to.</param>
         /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="privateKey"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="privateKey"/> is not private.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
@@ -132,12 +133,12 @@ namespace OBeautifulCode.Security.Recipes
             string unsecurePassword,
             Stream output)
         {
-            new { certChain }.Must().NotBeNull().And().NotBeEmptyEnumerable<X509Certificate>().OrThrowFirstFailure();
-            new { privateKey }.Must().NotBeNull().OrThrow();
-            new { privateKey.IsPrivate }.Must().BeTrue().OrThrow();
-            new { unsecurePassword }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrow();
-            new { output }.Must().NotBeNull().OrThrow();
-            new { output.CanWrite }.Must().BeTrue().OrThrow();
+            new { certChain }.Must().NotBeNullNorEmptyNorContainAnyNulls();
+            new { privateKey }.Must().NotBeNull();
+            new { privateKey.IsPrivate }.Must().BeTrue();
+            new { unsecurePassword }.Must().NotBeNullNorWhiteSpace();
+            new { output }.Must().NotBeNull();
+            new { output.CanWrite }.Must().BeTrue();
 
             certChain = certChain.OrderCertChainFromLowestToHighestLevelOfTrust();
 
@@ -186,13 +187,13 @@ namespace OBeautifulCode.Security.Recipes
             string state,
             string country)
         {
-            new { asymmetricKeyPair }.Must().NotBeNull().OrThrow();
-            new { commonName }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
-            new { organizationalUnit }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
-            new { organization }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
-            new { locality }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
-            new { state }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
-            new { country }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            new { asymmetricKeyPair }.Must().NotBeNull();
+            new { commonName }.Must().NotBeNullNorWhiteSpace();
+            new { organizationalUnit }.Must().NotBeNullNorWhiteSpace();
+            new { organization }.Must().NotBeNullNorWhiteSpace();
+            new { locality }.Must().NotBeNullNorWhiteSpace();
+            new { state }.Must().NotBeNullNorWhiteSpace();
+            new { country }.Must().NotBeNullNorWhiteSpace();
 
             var attributesInOrder = new List<Tuple<DerObjectIdentifier, string>>
             {
@@ -237,8 +238,8 @@ namespace OBeautifulCode.Security.Recipes
             byte[] input,
             string unsecurePassword)
         {
-            new { input }.Must().NotBeNull().OrThrow();
-            new { unsecurePassword }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            new { input }.Must().NotBeNull();
+            new { unsecurePassword }.Must().NotBeNullNorWhiteSpace();
 
             using (var inputStream = new MemoryStream(input))
             {
@@ -263,9 +264,9 @@ namespace OBeautifulCode.Security.Recipes
             Stream input,
             string unsecurePassword)
         {
-            new { input }.Must().NotBeNull().OrThrow();
-            new { input.CanRead }.Must().BeTrue().OrThrow();
-            new { unsecurePassword }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            new { input }.Must().NotBeNull();
+            new { input.CanRead }.Must().BeTrue();
+            new { unsecurePassword }.Must().NotBeNullNorWhiteSpace();
 
             var store = new Pkcs12Store(input, unsecurePassword.ToCharArray());
             var aliases = store.Aliases;
@@ -293,11 +294,12 @@ namespace OBeautifulCode.Security.Recipes
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
         public static X509Certificate GetEndUserCertFromCertChain(
             this IReadOnlyCollection<X509Certificate> certChain)
         {
-            new { certChain }.Must().NotBeNull().And().NotBeEmptyEnumerable<X509Certificate>().OrThrowFirstFailure();
+            new { certChain }.Must().NotBeNullNorEmptyNorContainAnyNulls();
 
             var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Last();
             return result;
@@ -313,11 +315,12 @@ namespace OBeautifulCode.Security.Recipes
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
         public static IReadOnlyList<X509Certificate> GetIntermediateChainFromCertChain(
             this IReadOnlyCollection<X509Certificate> certChain)
         {
-            new { certChain }.Must().NotBeNull().And().NotBeEmptyEnumerable<X509Certificate>().OrThrowFirstFailure();
+            new { certChain }.Must().NotBeNullNorEmptyNorContainAnyNulls();
 
             var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Take(certChain.Count - 1).ToList();
             return result;
@@ -332,11 +335,12 @@ namespace OBeautifulCode.Security.Recipes
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
         public static IReadOnlyList<X509Certificate> OrderCertChainFromLowestToHighestLevelOfTrust(
             this IReadOnlyCollection<X509Certificate> certChain)
         {
-            new { certChain }.Must().NotBeNull().And().NotBeEmptyEnumerable<X509Certificate>().OrThrowFirstFailure();
+            new { certChain }.Must().NotBeNullNorEmptyNorContainAnyNulls();
 
             var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Reverse().ToList();
             return result;
@@ -351,12 +355,13 @@ namespace OBeautifulCode.Security.Recipes
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "This is a good use of catching general exception types.")]
         public static IReadOnlyList<X509Certificate> OrderCertChainFromHighestToLowestLevelOfTrust(
             this IReadOnlyCollection<X509Certificate> certChain)
         {
-            new { certChain }.Must().NotBeNull().And().NotBeEmptyEnumerable<X509Certificate>().OrThrowFirstFailure();
+            new { certChain }.Must().NotBeNullNorEmptyNorContainAnyNulls();
 
             certChain = certChain.Distinct().ToList();
 
@@ -427,7 +432,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyList<X509Certificate> ReadCertsFromPemEncodedString(
             string pemEncodedCerts)
         {
-            new { pemEncodedCerts }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            new { pemEncodedCerts }.Must().NotBeNullNorWhiteSpace();
 
             // remove empty lines - required so that PemReader.ReadObject doesn't return null in-between returning certs
             pemEncodedCerts = Regex.Replace(pemEncodedCerts, @"^\s*$[\r\n]*", string.Empty, RegexOptions.Multiline);
@@ -463,7 +468,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyList<X509Certificate> ReadCertChainFromPemEncodedPkcs7CmsString(
             string pemEncodedPkcs7)
         {
-            new { pemEncodedPkcs7 }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            new { pemEncodedPkcs7 }.Must().NotBeNullNorWhiteSpace();
 
             IReadOnlyList<X509Certificate> result;
             using (var stringReader = new StringReader(pemEncodedPkcs7))
@@ -490,7 +495,7 @@ namespace OBeautifulCode.Security.Recipes
         public static Pkcs10CertificationRequest ReadCsrFromPemEncodedString(
             string pemEncodedCsr)
         {
-            new { pemEncodedCsr }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            new { pemEncodedCsr }.Must().NotBeNullNorWhiteSpace();
 
             Pkcs10CertificationRequest result;
             using (var stringReader = new StringReader(pemEncodedCsr))
@@ -515,7 +520,7 @@ namespace OBeautifulCode.Security.Recipes
         public static AsymmetricKeyParameter ReadPrivateKeyFromPemEncodedString(
             string pemEncodedPrivateKey)
         {
-            new { pemEncodedPrivateKey }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            new { pemEncodedPrivateKey }.Must().NotBeNullNorWhiteSpace();
 
             AsymmetricCipherKeyPair keyPair;
             using (var stringReader = new StringReader(pemEncodedPrivateKey))
@@ -544,7 +549,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyDictionary<X509FieldKind, string> GetX509Fields(
             this X509Certificate cert)
         {
-            new { cert }.Must().NotBeNull().OrThrow();
+            new { cert }.Must().NotBeNull();
 
             var result = new Dictionary<X509FieldKind, string>
             {
@@ -571,7 +576,7 @@ namespace OBeautifulCode.Security.Recipes
         public static string GetThumbprint(
             this X509Certificate cert)
         {
-            new { cert }.Must().NotBeNull().OrThrow();
+            new { cert }.Must().NotBeNull();
 
             using (var shaProvider = new SHA1CryptoServiceProvider())
             {
@@ -592,7 +597,7 @@ namespace OBeautifulCode.Security.Recipes
         public static DateTimeRangeInclusive GetValidityPeriod(
             this X509Certificate cert)
         {
-            new { cert }.Must().NotBeNull().OrThrow();
+            new { cert }.Must().NotBeNull();
 
             var result = new DateTimeRangeInclusive(cert.NotBefore, cert.NotAfter);
 
@@ -610,7 +615,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyDictionary<X509SubjectAttributeKind, string> GetX509SubjectAttributes(
             this Pkcs10CertificationRequest csr)
         {
-            new { csr }.Must().NotBeNull().OrThrow();
+            new { csr }.Must().NotBeNull();
 
             var subject = csr.GetCertificationRequestInfo().Subject;
 
@@ -630,7 +635,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyDictionary<X509SubjectAttributeKind, string> GetX509SubjectAttributes(
             this X509Certificate cert)
         {
-            new { cert }.Must().NotBeNull().OrThrow();
+            new { cert }.Must().NotBeNull();
 
             var subject = cert.SubjectDN;
 
@@ -650,7 +655,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyDictionary<X509SubjectAttributeKind, string> GetX509SubjectAttributes(
             this X509Name subject)
         {
-            new { subject }.Must().NotBeNull().OrThrow();
+            new { subject }.Must().NotBeNull();
 
             var objectIds = subject.GetOidList();
             var values = subject.GetValueList();
@@ -718,8 +723,8 @@ namespace OBeautifulCode.Security.Recipes
             byte[] input,
             string unsecurePassword)
         {
-            new { input }.Must().NotBeNull().OrThrow();
-            new { unsecurePassword }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            new { input }.Must().NotBeNull();
+            new { unsecurePassword }.Must().NotBeNullNorWhiteSpace();
 
             var extractedPfxFile = ExtractCryptographicObjectsFromPfxFile(input, unsecurePassword);
             var endUserCertificate = extractedPfxFile.CertificateChain.GetEndUserCertFromCertChain();
@@ -759,10 +764,10 @@ namespace OBeautifulCode.Security.Recipes
             IReadOnlyList<Tuple<DerObjectIdentifier, string>> attributesInOrder,
             IReadOnlyDictionary<DerObjectIdentifier, X509Extension> extensions)
         {
-            new { asymmetricKeyPair }.Must().NotBeNull().OrThrow();
-            new { signatureAlgorithm }.Must().NotBeEqualTo(SignatureAlgorithm.None).OrThrow();
-            new { attributesInOrder }.Must().NotBeNull().And().NotBeEmptyEnumerable<Tuple<DerObjectIdentifier, string>>().OrThrowFirstFailure();
-            new { extensions }.Must().NotBeNull().And().NotBeEmptyEnumerable<KeyValuePair<DerObjectIdentifier, X509Extension>>().OrThrowFirstFailure();
+            new { asymmetricKeyPair }.Must().NotBeNull();
+            new { signatureAlgorithm }.Must().NotBeEqualTo(SignatureAlgorithm.None);
+            new { attributesInOrder }.Must().NotBeNull().And().NotBeEmptyEnumerable();
+            new { extensions }.Must().NotBeNull().And().NotBeEmptyEnumerable();
 
             var signatureFactory = new Asn1SignatureFactory(signatureAlgorithm.ToSignatureAlgorithmString(), asymmetricKeyPair.Private);
 
