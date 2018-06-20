@@ -94,7 +94,7 @@ namespace OBeautifulCode.Security.Recipes
             string pfxFilePath,
             bool overwrite)
         {
-            new { certChain }.Must().NotBeNullNorEmptyNorContainAnyNulls();
+            new { certChain }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
             new { privateKey }.Must().NotBeNull();
             new { privateKey.IsPrivate }.Must().BeTrue();
             new { unsecurePassword }.Must().NotBeNullNorWhiteSpace();
@@ -133,7 +133,7 @@ namespace OBeautifulCode.Security.Recipes
             string unsecurePassword,
             Stream output)
         {
-            new { certChain }.Must().NotBeNullNorEmptyNorContainAnyNulls();
+            new { certChain }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
             new { privateKey }.Must().NotBeNull();
             new { privateKey.IsPrivate }.Must().BeTrue();
             new { unsecurePassword }.Must().NotBeNullNorWhiteSpace();
@@ -299,7 +299,7 @@ namespace OBeautifulCode.Security.Recipes
         public static X509Certificate GetEndUserCertFromCertChain(
             this IReadOnlyCollection<X509Certificate> certChain)
         {
-            new { certChain }.Must().NotBeNullNorEmptyNorContainAnyNulls();
+            new { certChain }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
 
             var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Last();
             return result;
@@ -320,7 +320,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyList<X509Certificate> GetIntermediateChainFromCertChain(
             this IReadOnlyCollection<X509Certificate> certChain)
         {
-            new { certChain }.Must().NotBeNullNorEmptyNorContainAnyNulls();
+            new { certChain }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
 
             var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Take(certChain.Count - 1).ToList();
             return result;
@@ -340,7 +340,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyList<X509Certificate> OrderCertChainFromLowestToHighestLevelOfTrust(
             this IReadOnlyCollection<X509Certificate> certChain)
         {
-            new { certChain }.Must().NotBeNullNorEmptyNorContainAnyNulls();
+            new { certChain }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
 
             var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Reverse().ToList();
             return result;
@@ -361,7 +361,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyList<X509Certificate> OrderCertChainFromHighestToLowestLevelOfTrust(
             this IReadOnlyCollection<X509Certificate> certChain)
         {
-            new { certChain }.Must().NotBeNullNorEmptyNorContainAnyNulls();
+            new { certChain }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
 
             certChain = certChain.Distinct().ToList();
 

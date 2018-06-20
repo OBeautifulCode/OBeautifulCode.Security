@@ -37,7 +37,7 @@ namespace OBeautifulCode.Security.Recipes
             IReadOnlyList<X509Certificate> certificateChain,
             AsymmetricKeyParameter privateKey)
         {
-            new { certificateChain }.Must().NotBeNullNorEmptyNorContainAnyNulls();
+            new { certificateChain }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
             new { privateKey }.Must().NotBeNull();
 
             this.CertificateChain = certificateChain;
