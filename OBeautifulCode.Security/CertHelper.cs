@@ -297,7 +297,7 @@ namespace OBeautifulCode.Security.Recipes
         }
 
         /// <summary>
-        /// Finds a certificate in the specificed store.
+        /// Finds a certificate in the specified store.
         /// </summary>
         /// <param name="storeLocation">Store location (eg. LocalMachine).</param>
         /// <param name="storeName">Store name to search for certificate (eg: My).</param>
@@ -305,7 +305,12 @@ namespace OBeautifulCode.Security.Recipes
         /// <param name="unsecuredPassword">Password to use for PFX file.</param>
         /// <param name="filePath">PFX file path to write to.</param>
         /// <returns>Certificate if found, null otherwise.</returns>
-        public static void ExportPfxFromCertificateStoreToFile(this StoreLocation storeLocation, StoreName storeName, string thumbprint, string unsecuredPassword, string filePath)
+        public static void ExportPfxFromCertificateStoreToFile(
+            this StoreLocation storeLocation,
+            StoreName storeName,
+            string thumbprint,
+            string unsecuredPassword,
+            string filePath)
         {
             new { thumbprint }.Must().NotBeNullNorWhiteSpace();
             new { unsecuredPassword }.Must().NotBeNullNorWhiteSpace();
