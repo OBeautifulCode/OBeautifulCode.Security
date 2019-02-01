@@ -11,6 +11,7 @@ namespace OBeautifulCode.Security.Recipes
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.IO;
     using System.Linq;
@@ -38,9 +39,9 @@ namespace OBeautifulCode.Security.Recipes
     /// <summary>
     /// Provides helpers methods for dealing with certificates.
     /// </summary>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are a lot of things you can do with certs!  Should really break this up...")]
+    [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are a lot of things you can do with certs!  Should really break this up...")]
 #if !OBeautifulCodeSecurityRecipesProject
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [ExcludeFromCodeCoverage]
     [System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Security", "See package version number")]
     internal
 #else
@@ -86,7 +87,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentNullException"><paramref name="pfxFilePath"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="pfxFilePath"/> is white space.</exception>
         /// <exception cref="IOException"><paramref name="overwrite"/> is false and there is a file at <paramref name="pfxFilePath"/>.</exception>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Creating a PFX requires lots of types.")]
+        [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Creating a PFX requires lots of types.")]
         public static void CreatePfxFile(
             IReadOnlyList<X509Certificate> certChain,
             AsymmetricKeyParameter privateKey,
@@ -126,7 +127,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="output"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="output"/> is not writable.</exception>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Creating a PFX requires lots of types.")]
+        [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Creating a PFX requires lots of types.")]
         public static void CreatePfxFile(
             IReadOnlyList<X509Certificate> certChain,
             AsymmetricKeyParameter privateKey,
@@ -180,7 +181,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentNullException"><paramref name="asymmetricKeyPair"/> is null.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="commonName"/> or <paramref name="organizationalUnit"/>or <paramref name="organization"/> or <paramref name="locality"/> or <paramref name="state"/> or <paramref name="country"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="commonName"/> or <paramref name="organizationalUnit"/> or <paramref name="organization"/> or <paramref name="locality"/> or <paramref name="state"/> or <paramref name="country"/> is white space.</exception>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
+        [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
         public static Pkcs10CertificationRequest CreateSslCsr(
             this AsymmetricCipherKeyPair asymmetricKeyPair,
             string commonName,
@@ -363,7 +364,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "This is a good use of catching general exception types.")]
+        [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "This is a good use of catching general exception types.")]
         public static IReadOnlyList<X509Certificate> OrderCertChainFromHighestToLowestLevelOfTrust(
             this IReadOnlyCollection<X509Certificate> certChain)
         {
@@ -578,7 +579,7 @@ namespace OBeautifulCode.Security.Recipes
         /// The thumbprint of the specified X509 certificate.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="cert"/> is null.</exception>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Globalization", "CA1308:NormalizeStringsToUppercase", Justification = "We specifically want lower-case here.")]
+        [SuppressMessage("Microsoft.Globalization", "CA1308:NormalizeStringsToUppercase", Justification = "We specifically want lower-case here.")]
         public static string GetThumbprint(
             this X509Certificate cert)
         {
@@ -763,7 +764,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentException"><paramref name="attributesInOrder"/> is empty.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="extensions"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="extensions"/> is empty.</exception>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
+        [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
         private static Pkcs10CertificationRequest CreateCsr(
             this AsymmetricCipherKeyPair asymmetricKeyPair,
             SignatureAlgorithm signatureAlgorithm,
