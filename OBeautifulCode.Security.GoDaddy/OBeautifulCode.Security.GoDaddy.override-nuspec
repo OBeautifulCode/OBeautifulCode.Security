@@ -1,0 +1,7 @@
+﻿<package>
+  <metadata>
+    <description>A security-related (e.g. certs) GoDaddy API wrapper.</description>
+    <tags>godaddy certificate security</tags>
+    <iconUrl>https://raw.githubusercontent.com/OBeautifulCode/OBeautifulCode.Security.GoDaddy/master/OBeautifulCode.Security.GoDaddy/nuget-icon.png</iconUrl>
+  </metadata>
+</package>
