@@ -6,9 +6,9 @@
     <tags>certificate signing request csr rsa asymmetric key pem</tags>
     <iconUrl>https://raw.githubusercontent.com/OBeautifulCode/OBeautifulCode.Security/master/OBeautifulCode.Security/nuget-icon.png</iconUrl>
     <dependencies>
-      <dependency id="BouncyCastle" version="1.8.2" />
-      <dependency id="OBeautifulCode.Validation.Recipes.ParameterValidator" version="1.0.14" />
-      <dependency id="Naos.Recipes.TupleInitializers" version="1.0.88" />
+      <dependency id="BouncyCastle" version="1.8.4" />
+      <dependency id="OBeautifulCode.Validation.Recipes.ParameterValidator" version="1.0.20" />
+      <dependency id="Naos.Recipes.TupleInitializers" version="1.0.108" />
       <dependency id="OBeautifulCode.DateTime" version="1.0.6" />
     </dependencies>
   </metadata>

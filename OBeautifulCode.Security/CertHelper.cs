@@ -785,8 +785,7 @@ namespace OBeautifulCode.Security.Recipes
                 signatureFactory,
                 subject,
                 asymmetricKeyPair.Public,
-                new DerSet(new AttributePkcs(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(new X509Extensions(extensionsForCsr)))),
-                asymmetricKeyPair.Private);
+                new DerSet(new AttributePkcs(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(new X509Extensions(extensionsForCsr)))));
             return result;
         }
 
