@@ -60,7 +60,7 @@ namespace OBeautifulCode.Security.GoDaddy
         /// <returns>
         /// The certificate identifier.
         /// </returns>
-        public async Task<CertificateIdentifierResponse> CreatePendingOrderForCertificate(
+        public async Task<CertificateIdentifierResponse> CreatePendingOrderForCertificateAsync(
             CertificateCreate request,
             string marketId = null)
         {
@@ -73,7 +73,7 @@ namespace OBeautifulCode.Security.GoDaddy
 
             var response = await client.PostAsync("certificates", request);
 
-            await ThrowIfResponseIsNotSuccessful(response, CertificateApiMethod.CreatePendingOrderForCertificate);
+            await ThrowIfResponseIsNotSuccessfulAsync(response, CertificateApiMethod.CreatePendingOrderForCertificate);
 
             var result = await response.Content.DeserializeAsync<CertificateIdentifierResponse>();
 
@@ -86,7 +86,7 @@ namespace OBeautifulCode.Security.GoDaddy
         ///// <param name="request"></param>
         ///// <param name="XMarketId"></param>
         ///// <returns></returns>
-        // public async Task<CertificateIdentifierResponse> ValidatePendingOrderForCertificate()
+        // public async Task<CertificateIdentifierResponse> ValidatePendingOrderForCertificateAsync()
         // {
         //    await ThrowIfResponseIsNotSuccessful(response, CertificateApiMethod.ValidatePendingOrderForCertificate);
         //    return null;
@@ -96,7 +96,7 @@ namespace OBeautifulCode.Security.GoDaddy
         ///// </summary>
         ///// <param name="request"></param>
         ///// <returns></returns>
-        // public async Task<CertificateIdentifierResponse> RetrieveCertificateDetails(CertificateDetailRetrieve request)
+        // public async Task<CertificateIdentifierResponse> RetrieveCertificateDetailsAsync(CertificateDetailRetrieve request)
         // {
         //    var client = this.GetHttpClient();
         //    var response = await client.GetAsync($"certificates/{request.certificateId}");
@@ -108,7 +108,7 @@ namespace OBeautifulCode.Security.GoDaddy
         ///// </summary>
         ///// <param name="request"></param>
         ///// <returns></returns>
-        // public async Task<List<CertificateActionResponse>> RetrieveAllCertificateActions(CertificateActionRetrieve request)
+        // public async Task<List<CertificateActionResponse>> RetrieveAllCertificateActionsAsync(CertificateActionRetrieve request)
         // {
         //    var client = this.GetHttpClient();
         //    var response = await client.GetAsync($"certificates/{request.certificateId}/actions");
@@ -120,7 +120,7 @@ namespace OBeautifulCode.Security.GoDaddy
         ///// </summary>
         ///// <param name="request"></param>
         ///// <returns></returns>
-        // public async Task CancelPendingCertificate(CertificateCancel request)
+        // public async Task CancelPendingCertificateAsync(CertificateCancel request)
         // {
         //    var client = this.GetHttpClient();
         //    var response = await client.PostAsync($"certificates/{request.certificateId}/cancel", request);
@@ -132,7 +132,7 @@ namespace OBeautifulCode.Security.GoDaddy
         ///// </summary>
         ///// <param name="request"></param>
         ///// <returns></returns>
-        // public async Task<CertificateBundleResponse> DownloadCertificate(CertificateDownload request)
+        // public async Task<CertificateBundleResponse> DownloadCertificateAsync(CertificateDownload request)
         // {
         //    var client = this.GetHttpClient();
         //    var response = await client.GetAsync($"certificates/{request.certificateId}/download");
@@ -145,7 +145,7 @@ namespace OBeautifulCode.Security.GoDaddy
         ///// <param name="request"></param>
         ///// <param name="certificateId"></param>
         ///// <returns></returns>
-        // public async Task ReissueActiveCertificate(CertificateReissue request, string certificateId)
+        // public async Task ReissueActiveCertificateAsync(CertificateReissue request, string certificateId)
         // {
         //    if (request.delayExistingRevoke != null)
         //    {
@@ -162,7 +162,7 @@ namespace OBeautifulCode.Security.GoDaddy
         ///// <param name="request"></param>
         ///// <param name="certificateId"></param>
         ///// <returns></returns>
-        // public async Task RenewActiveCertificate(CertificateRenew request, string certificateId)
+        // public async Task RenewActiveCertificateAsync(CertificateRenew request, string certificateId)
         // {
         //    var client = this.GetHttpClient();
         //    var response = await client.PostAsync($"certificates/{certificateId}/renew", request);
@@ -175,7 +175,7 @@ namespace OBeautifulCode.Security.GoDaddy
         ///// <param name="request"></param>
         ///// <param name="certificateId"></param>
         ///// <returns></returns>
-        // public async Task RevokeActiveCertificate(CertificateRevoke request, string certificateId)
+        // public async Task RevokeActiveCertificateAsync(CertificateRevoke request, string certificateId)
         // {
         //    var client = this.GetHttpClient();
         //    var response = await client.PostAsync($"certificates/{certificateId}/revoke", request);
@@ -187,14 +187,14 @@ namespace OBeautifulCode.Security.GoDaddy
         ///// </summary>
         ///// <param name="request"></param>
         ///// <returns></returns>
-        // public async Task CheckDomainControl(CertificateDomainControlCheck request)
+        // public async Task CheckDomainControlAsync(CertificateDomainControlCheck request)
         // {
         //    var client = this.GetHttpClient();
         //    var response = await client.PostAsync($"certificates/{request.certificateId}/verifydomaincontrol", null);
         //    await ThrowIfResponseIsNotSuccessful(response, CertificateApiMethod.CheckDomainControl);
         //    return;
         // }
-        private static async Task ThrowIfResponseIsNotSuccessful(
+        private static async Task ThrowIfResponseIsNotSuccessfulAsync(
             HttpResponseMessage response,
             CertificateApiMethod method)
         {
