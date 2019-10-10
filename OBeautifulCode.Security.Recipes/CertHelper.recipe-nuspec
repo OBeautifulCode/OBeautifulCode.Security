@@ -8,8 +8,7 @@
     <dependencies>
       <dependency id="BouncyCastle" version="1.8.4" />
       <dependency id="OBeautifulCode.Assertion.Recipes.Must" version="1.0.9" />
-      <dependency id="Naos.Recipes.TupleInitializers" version="1.0.108" />
-      <dependency id="OBeautifulCode.DateTime" version="1.0.6" />
+      <dependency id="OBeautifulCode.Type" version="1.0.25" />
     </dependencies>
   </metadata>
   <files>

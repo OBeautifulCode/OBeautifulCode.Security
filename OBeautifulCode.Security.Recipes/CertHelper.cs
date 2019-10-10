@@ -19,11 +19,9 @@ namespace OBeautifulCode.Security.Recipes
     using System.Security.Cryptography.X509Certificates;
     using System.Text.RegularExpressions;
 
-    using Naos.Recipes.TupleInitializers;
-
     using OBeautifulCode.Assertion.Recipes;
-    using OBeautifulCode.DateTime;
-    
+    using OBeautifulCode.Type;
+
     using Org.BouncyCastle.Asn1;
     using Org.BouncyCastle.Asn1.Pkcs;
     using Org.BouncyCastle.Asn1.X509;
@@ -204,14 +202,14 @@ namespace OBeautifulCode.Security.Recipes
             new { state }.AsArg().Must().NotBeNullNorWhiteSpace();
             new { country }.AsArg().Must().NotBeNullNorWhiteSpace();
 
-            var attributesInOrder = new List<Tuple<DerObjectIdentifier, string>>
+            var attributesInOrder = new List<DerObjectValue>
             {
-                { X509Name.C, country },
-                { X509Name.ST, state },
-                { X509Name.L, locality },
-                { X509Name.O, organization },
-                { X509Name.OU, organizationalUnit },
-                { X509Name.CN, commonName },
+                new DerObjectValue(X509Name.C, country),
+                new DerObjectValue(X509Name.ST, state),
+                new DerObjectValue(X509Name.L, locality),
+                new DerObjectValue(X509Name.O, organization),
+                new DerObjectValue(X509Name.OU, organizationalUnit),
+                new DerObjectValue(X509Name.CN, commonName),
             };
 
             var extensions = new Dictionary<DerObjectIdentifier, X509Extension>
@@ -229,6 +227,7 @@ namespace OBeautifulCode.Security.Recipes
             }
 
             var result = CreateCsr(asymmetricKeyPair, SignatureAlgorithm.Sha1WithRsaEncryption, attributesInOrder, extensions);
+
             return result;
         }
 
@@ -660,12 +659,12 @@ namespace OBeautifulCode.Security.Recipes
         /// The range of time over which the specified certificate is valid.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="cert"/> is null.</exception>
-        public static DateTimeRangeInclusive GetValidityPeriod(
+        public static UtcDateTimeRangeInclusive GetValidityPeriod(
             this X509Certificate cert)
         {
             new { cert }.AsArg().Must().NotBeNull();
 
-            var result = new DateTimeRangeInclusive(cert.NotBefore, cert.NotAfter);
+            var result = new UtcDateTimeRangeInclusive(cert.NotBefore, cert.NotAfter);
 
             return result;
         }
@@ -827,7 +826,7 @@ namespace OBeautifulCode.Security.Recipes
         private static Pkcs10CertificationRequest CreateCsr(
             this AsymmetricCipherKeyPair asymmetricKeyPair,
             SignatureAlgorithm signatureAlgorithm,
-            IReadOnlyList<Tuple<DerObjectIdentifier, string>> attributesInOrder,
+            IReadOnlyList<DerObjectValue> attributesInOrder,
             IReadOnlyDictionary<DerObjectIdentifier, X509Extension> extensions)
         {
             new { asymmetricKeyPair }.AsArg().Must().NotBeNull();
@@ -837,7 +836,7 @@ namespace OBeautifulCode.Security.Recipes
 
             var signatureFactory = new Asn1SignatureFactory(signatureAlgorithm.ToSignatureAlgorithmString(), asymmetricKeyPair.Private);
 
-            var subject = new X509Name(attributesInOrder.Select(_ => _.Item1).ToList(), attributesInOrder.Select(_ => _.Item2).ToList());
+            var subject = new X509Name(attributesInOrder.Select(_ => _.Identifier).ToList(), attributesInOrder.Select(_ => _.Value).ToList());
 
             var extensionsForCsr = extensions.ToDictionary(_ => _.Key, _ => _.Value);
 
@@ -903,6 +902,21 @@ namespace OBeautifulCode.Security.Recipes
                 default:
                     throw new NotSupportedException("this algorithm is not supported: " + signatureAlgorithm);
             }
+        }
+
+        private class DerObjectValue
+        {
+            public DerObjectValue(
+                DerObjectIdentifier identifier,
+                string value)
+            {
+                this.Identifier = identifier;
+                this.Value = value;
+            }
+
+            public DerObjectIdentifier Identifier { get; }
+
+            public string Value { get; }
         }
     }
 }
