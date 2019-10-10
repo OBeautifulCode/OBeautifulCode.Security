@@ -21,9 +21,9 @@ namespace OBeautifulCode.Security.Recipes
 
     using Naos.Recipes.TupleInitializers;
 
+    using OBeautifulCode.Assertion.Recipes;
     using OBeautifulCode.DateTime;
-    using OBeautifulCode.Validation.Recipes;
-
+    
     using Org.BouncyCastle.Asn1;
     using Org.BouncyCastle.Asn1.Pkcs;
     using Org.BouncyCastle.Asn1.X509;
@@ -99,11 +99,11 @@ namespace OBeautifulCode.Security.Recipes
             string pfxFilePath,
             bool overwrite)
         {
-            new { certChain }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
-            new { privateKey }.Must().NotBeNull();
-            new { privateKey.IsPrivate }.Must().BeTrue();
-            new { unsecurePassword }.Must().NotBeNullNorWhiteSpace();
-            new { pfxFilePath }.Must().NotBeNullNorWhiteSpace();
+            new { certChain }.AsArg().Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
+            new { privateKey }.AsArg().Must().NotBeNull();
+            new { privateKey.IsPrivate }.AsArg().Must().BeTrue();
+            new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { pfxFilePath }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             var mode = overwrite ? FileMode.Create : FileMode.CreateNew;
             using (var fileStream = new FileStream(pfxFilePath, mode, FileAccess.Write, FileShare.None))
@@ -138,12 +138,12 @@ namespace OBeautifulCode.Security.Recipes
             string unsecurePassword,
             Stream output)
         {
-            new { certChain }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
-            new { privateKey }.Must().NotBeNull();
-            new { privateKey.IsPrivate }.Must().BeTrue();
-            new { unsecurePassword }.Must().NotBeNullNorWhiteSpace();
-            new { output }.Must().NotBeNull();
-            new { output.CanWrite }.Must().BeTrue();
+            new { certChain }.AsArg().Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
+            new { privateKey }.AsArg().Must().NotBeNull();
+            new { privateKey.IsPrivate }.AsArg().Must().BeTrue();
+            new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { output }.AsArg().Must().NotBeNull();
+            new { output.CanWrite }.AsArg().Must().BeTrue();
 
             certChain = certChain.OrderCertChainFromLowestToHighestLevelOfTrust();
 
@@ -196,13 +196,13 @@ namespace OBeautifulCode.Security.Recipes
             string state,
             string country)
         {
-            new { asymmetricKeyPair }.Must().NotBeNull();
-            new { commonName }.Must().NotBeNullNorWhiteSpace();
-            new { organizationalUnit }.Must().NotBeNullNorWhiteSpace();
-            new { organization }.Must().NotBeNullNorWhiteSpace();
-            new { locality }.Must().NotBeNullNorWhiteSpace();
-            new { state }.Must().NotBeNullNorWhiteSpace();
-            new { country }.Must().NotBeNullNorWhiteSpace();
+            new { asymmetricKeyPair }.AsArg().Must().NotBeNull();
+            new { commonName }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { organizationalUnit }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { organization }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { locality }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { state }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { country }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             var attributesInOrder = new List<Tuple<DerObjectIdentifier, string>>
             {
@@ -247,8 +247,8 @@ namespace OBeautifulCode.Security.Recipes
             byte[] input,
             string unsecurePassword)
         {
-            new { input }.Must().NotBeNull();
-            new { unsecurePassword }.Must().NotBeNullNorWhiteSpace();
+            new { input }.AsArg().Must().NotBeNull();
+            new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             using (var inputStream = new MemoryStream(input))
             {
@@ -273,9 +273,9 @@ namespace OBeautifulCode.Security.Recipes
             Stream input,
             string unsecurePassword)
         {
-            new { input }.Must().NotBeNull();
-            new { input.CanRead }.Must().BeTrue();
-            new { unsecurePassword }.Must().NotBeNullNorWhiteSpace();
+            new { input }.AsArg().Must().NotBeNull();
+            new { input.CanRead }.AsArg().Must().BeTrue();
+            new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             var store = new Pkcs12Store(input, unsecurePassword.ToCharArray());
             var aliases = store.Aliases;
@@ -312,8 +312,8 @@ namespace OBeautifulCode.Security.Recipes
             string unsecuredPassword,
             string filePath)
         {
-            new { thumbprint }.Must().NotBeNullNorWhiteSpace();
-            new { unsecuredPassword }.Must().NotBeNullNorWhiteSpace();
+            new { thumbprint }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { unsecuredPassword }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             using (var store = new X509Store(storeName, storeLocation))
             {
@@ -365,7 +365,7 @@ namespace OBeautifulCode.Security.Recipes
         public static X509Certificate GetEndUserCertFromCertChain(
             this IReadOnlyCollection<X509Certificate> certChain)
         {
-            new { certChain }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
+            new { certChain }.AsArg().Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
 
             var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Last();
             return result;
@@ -386,7 +386,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyList<X509Certificate> GetIntermediateChainFromCertChain(
             this IReadOnlyCollection<X509Certificate> certChain)
         {
-            new { certChain }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
+            new { certChain }.AsArg().Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
 
             var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Take(certChain.Count - 1).ToList();
             return result;
@@ -406,7 +406,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyList<X509Certificate> OrderCertChainFromLowestToHighestLevelOfTrust(
             this IReadOnlyCollection<X509Certificate> certChain)
         {
-            new { certChain }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
+            new { certChain }.AsArg().Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
 
             var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Reverse().ToList();
             return result;
@@ -427,7 +427,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyList<X509Certificate> OrderCertChainFromHighestToLowestLevelOfTrust(
             this IReadOnlyCollection<X509Certificate> certChain)
         {
-            new { certChain }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
+            new { certChain }.AsArg().Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
 
             certChain = certChain.Distinct().ToList();
 
@@ -498,7 +498,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyList<X509Certificate> ReadCertsFromPemEncodedString(
             string pemEncodedCerts)
         {
-            new { pemEncodedCerts }.Must().NotBeNullNorWhiteSpace();
+            new { pemEncodedCerts }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             // remove empty lines - required so that PemReader.ReadObject doesn't return null in-between returning certs
             pemEncodedCerts = Regex.Replace(pemEncodedCerts, @"^\s*$[\r\n]*", string.Empty, RegexOptions.Multiline);
@@ -534,7 +534,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyList<X509Certificate> ReadCertChainFromPemEncodedPkcs7CmsString(
             string pemEncodedPkcs7)
         {
-            new { pemEncodedPkcs7 }.Must().NotBeNullNorWhiteSpace();
+            new { pemEncodedPkcs7 }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             IReadOnlyList<X509Certificate> result;
             using (var stringReader = new StringReader(pemEncodedPkcs7))
@@ -561,7 +561,7 @@ namespace OBeautifulCode.Security.Recipes
         public static Pkcs10CertificationRequest ReadCsrFromPemEncodedString(
             string pemEncodedCsr)
         {
-            new { pemEncodedCsr }.Must().NotBeNullNorWhiteSpace();
+            new { pemEncodedCsr }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             Pkcs10CertificationRequest result;
             using (var stringReader = new StringReader(pemEncodedCsr))
@@ -586,7 +586,7 @@ namespace OBeautifulCode.Security.Recipes
         public static AsymmetricKeyParameter ReadPrivateKeyFromPemEncodedString(
             string pemEncodedPrivateKey)
         {
-            new { pemEncodedPrivateKey }.Must().NotBeNullNorWhiteSpace();
+            new { pemEncodedPrivateKey }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             AsymmetricCipherKeyPair keyPair;
             using (var stringReader = new StringReader(pemEncodedPrivateKey))
@@ -615,7 +615,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyDictionary<X509FieldKind, string> GetX509Fields(
             this X509Certificate cert)
         {
-            new { cert }.Must().NotBeNull();
+            new { cert }.AsArg().Must().NotBeNull();
 
             var result = new Dictionary<X509FieldKind, string>
             {
@@ -642,7 +642,7 @@ namespace OBeautifulCode.Security.Recipes
         public static string GetThumbprint(
             this X509Certificate cert)
         {
-            new { cert }.Must().NotBeNull();
+            new { cert }.AsArg().Must().NotBeNull();
 
             using (var shaProvider = new SHA1CryptoServiceProvider())
             {
@@ -663,7 +663,7 @@ namespace OBeautifulCode.Security.Recipes
         public static DateTimeRangeInclusive GetValidityPeriod(
             this X509Certificate cert)
         {
-            new { cert }.Must().NotBeNull();
+            new { cert }.AsArg().Must().NotBeNull();
 
             var result = new DateTimeRangeInclusive(cert.NotBefore, cert.NotAfter);
 
@@ -681,7 +681,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyDictionary<X509SubjectAttributeKind, string> GetX509SubjectAttributes(
             this Pkcs10CertificationRequest csr)
         {
-            new { csr }.Must().NotBeNull();
+            new { csr }.AsArg().Must().NotBeNull();
 
             var subject = csr.GetCertificationRequestInfo().Subject;
 
@@ -701,7 +701,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyDictionary<X509SubjectAttributeKind, string> GetX509SubjectAttributes(
             this X509Certificate cert)
         {
-            new { cert }.Must().NotBeNull();
+            new { cert }.AsArg().Must().NotBeNull();
 
             var subject = cert.SubjectDN;
 
@@ -721,7 +721,7 @@ namespace OBeautifulCode.Security.Recipes
         public static IReadOnlyDictionary<X509SubjectAttributeKind, string> GetX509SubjectAttributes(
             this X509Name subject)
         {
-            new { subject }.Must().NotBeNull();
+            new { subject }.AsArg().Must().NotBeNull();
 
             var objectIds = subject.GetOidList();
             var values = subject.GetValueList();
@@ -789,8 +789,8 @@ namespace OBeautifulCode.Security.Recipes
             byte[] input,
             string unsecurePassword)
         {
-            new { input }.Must().NotBeNull();
-            new { unsecurePassword }.Must().NotBeNullNorWhiteSpace();
+            new { input }.AsArg().Must().NotBeNull();
+            new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             var extractedPfxFile = ExtractCryptographicObjectsFromPfxFile(input, unsecurePassword);
             var endUserCertificate = extractedPfxFile.CertificateChain.GetEndUserCertFromCertChain();
@@ -830,10 +830,10 @@ namespace OBeautifulCode.Security.Recipes
             IReadOnlyList<Tuple<DerObjectIdentifier, string>> attributesInOrder,
             IReadOnlyDictionary<DerObjectIdentifier, X509Extension> extensions)
         {
-            new { asymmetricKeyPair }.Must().NotBeNull();
-            new { signatureAlgorithm }.Must().NotBeEqualTo(SignatureAlgorithm.None);
-            new { attributesInOrder }.Must().NotBeNull().And().NotBeEmptyEnumerable();
-            new { extensions }.Must().NotBeNull().And().NotBeEmptyEnumerable();
+            new { asymmetricKeyPair }.AsArg().Must().NotBeNull();
+            new { signatureAlgorithm }.AsArg().Must().NotBeEqualTo(SignatureAlgorithm.None);
+            new { attributesInOrder }.AsArg().Must().NotBeNull().And().NotBeEmptyEnumerable();
+            new { extensions }.AsArg().Must().NotBeNull().And().NotBeEmptyEnumerable();
 
             var signatureFactory = new Asn1SignatureFactory(signatureAlgorithm.ToSignatureAlgorithmString(), asymmetricKeyPair.Private);
 

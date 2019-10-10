@@ -11,7 +11,7 @@ namespace OBeautifulCode.Security.Recipes
 {
     using System.Collections.Generic;
 
-    using OBeautifulCode.Validation.Recipes;
+    using OBeautifulCode.Assertion.Recipes;
 
     using Org.BouncyCastle.Crypto;
     using Org.BouncyCastle.X509;
@@ -37,8 +37,8 @@ namespace OBeautifulCode.Security.Recipes
             IReadOnlyList<X509Certificate> certificateChain,
             AsymmetricKeyParameter privateKey)
         {
-            new { certificateChain }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
-            new { privateKey }.Must().NotBeNull();
+            new { certificateChain }.AsArg().Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
+            new { privateKey }.AsArg().Must().NotBeNull();
 
             this.CertificateChain = certificateChain;
             this.PrivateKey = privateKey;

@@ -9,7 +9,7 @@
 
 namespace OBeautifulCode.Security.Recipes
 {
-    using OBeautifulCode.Validation.Recipes;
+    using OBeautifulCode.Assertion.Recipes;
 
     /// <summary>
     /// Container for payload require to load certificates into the AWS Certificate Manager.
@@ -34,9 +34,9 @@ namespace OBeautifulCode.Security.Recipes
             string certificatePrivateKey,
             string certificateChain)
         {
-            new { certificateBody }.Must().NotBeNullNorWhiteSpace();
-            new { certificatePrivateKey }.Must().NotBeNullNorWhiteSpace();
-            new { certificateChain }.Must().NotBeNullNorWhiteSpace();
+            new { certificateBody }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { certificatePrivateKey }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { certificateChain }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             this.CertificateBody = certificateBody;
             this.CertificatePrivateKey = certificatePrivateKey;

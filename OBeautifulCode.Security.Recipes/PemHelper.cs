@@ -15,7 +15,7 @@ namespace OBeautifulCode.Security.Recipes
     using System.IO;
     using System.Text;
 
-    using OBeautifulCode.Validation.Recipes;
+    using OBeautifulCode.Assertion.Recipes;
 
     using Org.BouncyCastle.Crypto;
     using Org.BouncyCastle.OpenSsl;
@@ -45,7 +45,7 @@ namespace OBeautifulCode.Security.Recipes
         public static string AsPemEncodedString(
             this Pkcs10CertificationRequest csr)
         {
-            new { csr }.Must().NotBeNull();
+            new { csr }.AsArg().Must().NotBeNull();
 
             var result = EncodeAsPem(csr);
             return result;
@@ -62,7 +62,7 @@ namespace OBeautifulCode.Security.Recipes
         public static string AsPemEncodedString(
             this AsymmetricCipherKeyPair keyPair)
         {
-            new { keyPair }.Must().NotBeNull();
+            new { keyPair }.AsArg().Must().NotBeNull();
 
             var result = EncodeAsPem(keyPair);
             return result;
@@ -79,7 +79,7 @@ namespace OBeautifulCode.Security.Recipes
         public static string AsPemEncodedString(
             this AsymmetricKeyParameter key)
         {
-            new { key }.Must().NotBeNull();
+            new { key }.AsArg().Must().NotBeNull();
 
             var result = EncodeAsPem(key);
             return result;
@@ -96,7 +96,7 @@ namespace OBeautifulCode.Security.Recipes
         public static string AsPemEncodedString(
             this X509Certificate cert)
         {
-            new { cert }.Must().NotBeNull();
+            new { cert }.AsArg().Must().NotBeNull();
 
             var result = EncodeAsPem(cert);
             return result;
@@ -113,7 +113,7 @@ namespace OBeautifulCode.Security.Recipes
         public static string AsPemEncodedString(
             this IReadOnlyList<X509Certificate> certChain)
         {
-            new { certChain }.Must().NotBeNull();
+            new { certChain }.AsArg().Must().NotBeNull();
 
             var stringBuilder = new StringBuilder();
             foreach (var cert in certChain)
@@ -129,7 +129,7 @@ namespace OBeautifulCode.Security.Recipes
         private static string EncodeAsPem(
             object item)
         {
-            new { item }.Must().NotBeNull();
+            new { item }.AsArg().Must().NotBeNull();
 
             string result;
             var stringBuilder = new StringBuilder();
