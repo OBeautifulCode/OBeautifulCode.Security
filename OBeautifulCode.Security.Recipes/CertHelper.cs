@@ -38,6 +38,8 @@ namespace OBeautifulCode.Security.Recipes
     using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
     using X509Extension = Org.BouncyCastle.Asn1.X509.X509Extension;
 
+    using static System.FormattableString;
+
     /// <summary>
     /// Provides helpers methods for dealing with certificates.
     /// </summary>
@@ -320,7 +322,7 @@ namespace OBeautifulCode.Security.Recipes
                 var certs = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
                 if (certs.Count != 1)
                 {
-                    throw new ArgumentException("Expected a single cert; found: " + certs.Count);
+                    throw new ArgumentException(Invariant($"Expected a single cert; found: {certs.Count}"));
                 }
 
                 var cert = certs[0];
