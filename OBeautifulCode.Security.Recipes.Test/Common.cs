@@ -4,7 +4,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace OBeautifulCode.Security.Test
+namespace OBeautifulCode.Security.Recipes.Test
 {
     using System.Text.RegularExpressions;
 

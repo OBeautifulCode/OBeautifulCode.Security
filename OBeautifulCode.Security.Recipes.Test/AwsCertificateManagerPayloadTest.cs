@@ -4,15 +4,13 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace OBeautifulCode.Security.Test
+namespace OBeautifulCode.Security.Recipes.Test
 {
     using System;
 
     using FakeItEasy;
 
     using FluentAssertions;
-
-    using OBeautifulCode.Security.Recipes;
 
     using Xunit;
 

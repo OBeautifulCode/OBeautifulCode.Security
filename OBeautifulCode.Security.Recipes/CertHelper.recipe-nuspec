@@ -4,7 +4,7 @@
     <id>OBeautifulCode.Security.Recipes.CertHelper</id>
     <description>Helper methods for dealing with certificates.</description>
     <tags>certificate signing request csr rsa asymmetric key pem</tags>
-    <iconUrl>https://raw.githubusercontent.com/OBeautifulCode/OBeautifulCode.Security/master/OBeautifulCode.Security/nuget-icon.png</iconUrl>
+    <iconUrl>https://raw.githubusercontent.com/OBeautifulCode/OBeautifulCode.Security/master/OBeautifulCode.Security.Recipes/nuget-icon.png</iconUrl>
     <dependencies>
       <dependency id="BouncyCastle" version="1.8.4" />
       <dependency id="OBeautifulCode.Validation.Recipes.ParameterValidator" version="1.0.20" />

@@ -8,8 +8,8 @@
     <ProjectGuid>{623FD24F-672A-4B11-BC58-25B466ABEA14}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>OBeautifulCode.Security.Test</RootNamespace>
-    <AssemblyName>OBeautifulCode.Security.Test</AssemblyName>
+    <RootNamespace>OBeautifulCode.Security.Recipes.Test</RootNamespace>
+    <AssemblyName>OBeautifulCode.Security.Recipes.Test</AssemblyName>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <NuGetPackageImportStamp>
@@ -112,9 +112,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OBeautifulCode.Security\OBeautifulCode.Security.csproj">
+    <ProjectReference Include="..\OBeautifulCode.Security.Recipes\OBeautifulCode.Security.Recipes.csproj">
       <Project>{A9CE0B3B-ECDC-49BA-BF41-90A4EA6091F6}</Project>
-      <Name>OBeautifulCode.Security</Name>
+      <Name>OBeautifulCode.Security.Recipes</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

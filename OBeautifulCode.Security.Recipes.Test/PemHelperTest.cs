@@ -4,7 +4,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace OBeautifulCode.Security.Test
+namespace OBeautifulCode.Security.Recipes.Test
 {
     using System;
     using System.Collections.Generic;
@@ -13,7 +13,6 @@ namespace OBeautifulCode.Security.Test
     using FluentAssertions;
 
     using OBeautifulCode.Reflection.Recipes;
-    using OBeautifulCode.Security.Recipes;
 
     using Org.BouncyCastle.Crypto;
     using Org.BouncyCastle.Crypto.Parameters;

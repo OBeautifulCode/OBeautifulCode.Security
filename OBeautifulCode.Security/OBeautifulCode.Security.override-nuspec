@@ -1,7 +1,0 @@
-﻿<package>
-  <metadata>
-    <description>Provides security-related convenience/helper methods.</description>
-    <tags>security cert certificate certificates</tags>
-    <iconUrl>https://raw.githubusercontent.com/OBeautifulCode/OBeautifulCode.Security/master/OBeautifulCode.Security/nuget-icon.png</iconUrl>
-  </metadata>
-</package>
