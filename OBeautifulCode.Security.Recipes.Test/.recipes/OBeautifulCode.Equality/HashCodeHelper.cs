@@ -9,6 +9,7 @@
 
 namespace OBeautifulCode.Equality.Recipes
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
@@ -98,23 +99,27 @@ namespace OBeautifulCode.Equality.Recipes
 
                 var valueType = typeof(T);
 
-                if (valueType.IsClosedSystemDictionaryType())
+                if (valueType.IsSystemDictionaryType())
                 {
+                    var genericArguments = valueType.GetGenericArguments();
+
                     var methodInfo = valueType.GetGenericTypeDefinition() == typeof(IDictionary<,>)
                         ? HashDictionaryMethodInfo
                         : HashReadOnlyDictionaryMethodInfo;
 
-                    result = (HashCodeHelper)methodInfo.MakeGenericMethod(valueType.GenericTypeArguments).Invoke(this, new[] { (object)item });
+                    result = (HashCodeHelper)methodInfo.MakeGenericMethod(genericArguments).Invoke(this, new[] { (object)item });
                 }
-                else if (valueType.IsClosedSystemCollectionType())
+                else if (valueType.IsSystemCollectionType())
                 {
-                    if (valueType.IsClosedSystemOrderedCollectionType())
+                    var genericArguments = valueType.GetGenericArguments();
+
+                    if (valueType.IsSystemOrderedCollectionType())
                     {
-                        result = (HashCodeHelper)HashOrderedCollectionMethodInfo.MakeGenericMethod(valueType.GenericTypeArguments).Invoke(this, new[] { (object)item });
+                        result = (HashCodeHelper)HashOrderedCollectionMethodInfo.MakeGenericMethod(genericArguments).Invoke(this, new[] { (object)item });
                     }
                     else
                     {
-                        result = (HashCodeHelper)HashUnorderedCollectionMethodInfo.MakeGenericMethod(valueType.GenericTypeArguments).Invoke(this, new[] { (object)item });
+                        result = (HashCodeHelper)HashUnorderedCollectionMethodInfo.MakeGenericMethod(genericArguments).Invoke(this, new[] { (object)item });
                     }
                 }
                 else if (valueType.IsArray)
@@ -151,8 +156,10 @@ namespace OBeautifulCode.Equality.Recipes
             }
             else
             {
+                var keyComparer = Comparer<TKey>.Default;
+
                 // Is there a comparer for the keys?
-                if (!TypeExtensions.HasWorkingDefaultComparer<TKey>())
+                if (IsObjectComparer(keyComparer))
                 {
                     // There is no comparer for the keys and thus we cannot sort the key/value pairs.
                     // The best we can do is hash the count, which will ensure
@@ -165,7 +172,7 @@ namespace OBeautifulCode.Equality.Recipes
                     // The keys can be sorted.  Sort the key/value pairs by the keys
                     // and then hash the key collection and the value collection,
                     // treating them as ordered collections.
-                    var keyValuePairsInOrder = dictionary.OrderBy(_ => _.Key).ToList();
+                    var keyValuePairsInOrder = dictionary.OrderBy(_ => _.Key, keyComparer).ToList();
 
                     result = result.HashOrderedCollection(keyValuePairsInOrder.Select(_ => _.Key));
 
@@ -195,8 +202,10 @@ namespace OBeautifulCode.Equality.Recipes
             {
                 result = result.HashUnorderedCollection(dictionary.Keys);
 
+                var keyComparer = Comparer<TKey>.Default;
+
                 // Is there a comparer for the keys?
-                if (!TypeExtensions.HasWorkingDefaultComparer<TKey>())
+                if (IsObjectComparer(keyComparer))
                 {
                     // There is no comparer for the keys and thus we cannot sort the key/value pairs.
                     // The best we can do is hash the count, which will ensure
@@ -209,7 +218,7 @@ namespace OBeautifulCode.Equality.Recipes
                     // The keys can be sorted.  Sort the key/value pairs by the keys
                     // and then hash the key collection and the value collection,
                     // treating them as ordered collections.
-                    var keyValuePairsInOrder = dictionary.OrderBy(_ => _.Key).ToList();
+                    var keyValuePairsInOrder = dictionary.OrderBy(_ => _.Key, keyComparer).ToList();
 
                     result = result.HashOrderedCollection(keyValuePairsInOrder.Select(_ => _.Key));
 
@@ -264,9 +273,11 @@ namespace OBeautifulCode.Equality.Recipes
             }
             else
             {
+                var comparer = Comparer<TElement>.Default;
+
                 // Is there a comparer for the element type?
                 // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                if (!TypeExtensions.HasWorkingDefaultComparer<TElement>())
+                if (IsObjectComparer(comparer))
                 {
                     // There is no comparer and thus we cannot sort the elements.
                     // The best we can do is hash the element count, which will ensure
@@ -280,9 +291,19 @@ namespace OBeautifulCode.Equality.Recipes
                     // it as an ordered collection and hash that.  This ensures that
                     // two unordered collections that are equal but having a different
                     // order will result in the same hash code.
-                    result = result.HashOrderedCollection(collection.OrderBy(_ => _));
+                    result = result.HashOrderedCollection(collection.OrderBy(_ => _, comparer));
                 }
             }
+
+            return result;
+        }
+
+        private static bool IsObjectComparer<T>(
+            IComparer<T> comparer)
+        {
+            var typeFullName = comparer.GetType().FullName;
+
+            var result = typeFullName != null && typeFullName.StartsWith("System.Collections.Generic.ObjectComparer", StringComparison.Ordinal);
 
             return result;
         }

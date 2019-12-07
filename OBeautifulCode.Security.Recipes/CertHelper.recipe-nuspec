@@ -6,12 +6,13 @@
     <tags>certificate signing request csr rsa asymmetric key pem</tags>
     <iconUrl>https://raw.githubusercontent.com/OBeautifulCode/OBeautifulCode.Security/master/OBeautifulCode.Security.Recipes/nuget-icon.png</iconUrl>
     <dependencies>
-      <dependency id="BouncyCastle" version="1.8.4" />
-      <dependency id="OBeautifulCode.Assertion.Recipes.Must" version="1.0.9" />
-      <dependency id="OBeautifulCode.Type" version="1.0.25" />
+      <dependency id="BouncyCastle" version="1.8.5" />
+      <dependency id="OBeautifulCode.Assertion.Recipes.Must" version="1.0.12" />
+      <dependency id="OBeautifulCode.Type" version="1.0.33" />
     </dependencies>
   </metadata>
   <files>
+    <file src=".analyzers\SuppressBecause.cs" target="content\net462\.recipes\OBeautifulCode.Security\SuppressBecause.cs" />
     <file src="PemHelper.cs" target="content\net462\.recipes\OBeautifulCode.Security\PemHelper.cs" />
     <file src="CertHelper.cs" target="content\net462\.recipes\OBeautifulCode.Security\CertHelper.cs" />
     <file src="SignatureAlgorithm.cs" target="content\net462\.recipes\OBeautifulCode.Security\SignatureAlgorithm.cs" />
