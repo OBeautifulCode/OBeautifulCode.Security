@@ -29,6 +29,7 @@ namespace OBeautifulCode.Security.Recipes
     using Org.BouncyCastle.Crypto;
     using Org.BouncyCastle.Crypto.Generators;
     using Org.BouncyCastle.Crypto.Operators;
+    using Org.BouncyCastle.Crypto.Parameters;
     using Org.BouncyCastle.OpenSsl;
     using Org.BouncyCastle.Pkcs;
     using Org.BouncyCastle.Security;
@@ -589,17 +590,30 @@ namespace OBeautifulCode.Security.Recipes
         {
             new { pemEncodedPrivateKey }.AsArg().Must().NotBeNullNorWhiteSpace();
 
-            AsymmetricCipherKeyPair keyPair;
+            AsymmetricKeyParameter result;
+
             using (var stringReader = new StringReader(pemEncodedPrivateKey))
             {
                 var pemReader = new PemReader(stringReader);
-                keyPair = pemReader.ReadObject() as AsymmetricCipherKeyPair;
-            }
 
-            AsymmetricKeyParameter result = null;
-            if (keyPair != null)
-            {
-                result = keyPair.Private;
+                var pemReaderResult = pemReader.ReadObject();
+
+                if (pemReaderResult == null)
+                {
+                    result = null;
+                }
+                else if (pemReaderResult is RsaPrivateCrtKeyParameters rsaKeyPair)
+                {
+                    result = rsaKeyPair;
+                }
+                else if (pemReaderResult is AsymmetricCipherKeyPair asymmetricCipherKeyPair)
+                {
+                    result = asymmetricCipherKeyPair?.Private;
+                }
+                else
+                {
+                    throw new NotSupportedException("Type of PEM encoded private key not supported: " + pemReaderResult?.GetType());
+                }
             }
 
             return result;
