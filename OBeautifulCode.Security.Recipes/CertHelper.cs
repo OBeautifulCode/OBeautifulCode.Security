@@ -74,12 +74,64 @@ namespace OBeautifulCode.Security.Recipes
         /// <summary>
         /// Creates a PFX file.
         /// </summary>
+        /// <param name="pemEncodedIntermediateCertificateChainFilePath">Path to a PEM-encoded intermediate certificate chain (often with a 'ca-bundle' extension or file name contains 'bundle').</param>
+        /// <param name="pemEncodedCertificateFilePath">Path to PEM-encoded certificate (often with a 'crt' extension).</param>
+        /// <param name="pemEncodedPrivateKeyFilePath">Path to PEM-encoded private key.</param>
+        /// <param name="unsecurePassword">The password for the PFX file.</param>
+        /// <param name="outputPfxFilePath">The path to write the PFX file to.</param>
+        /// <param name="overwrite">
+        /// Determines whether to overwrite a file that already exist at <paramref name="outputPfxFilePath"/>.
+        /// If false and a file exists at that path, the method will throw.
+        /// </param>
+        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedIntermediateCertificateChainFilePath"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pemEncodedIntermediateCertificateChainFilePath"/> is white space.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedCertificateFilePath"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pemEncodedCertificateFilePath"/> is white space.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedPrivateKeyFilePath"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pemEncodedPrivateKeyFilePath"/> is white space.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="outputPfxFilePath"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="outputPfxFilePath"/> is white space.</exception>
+        /// <exception cref="IOException"><paramref name="overwrite"/> is false and there is a file at <paramref name="outputPfxFilePath"/>.</exception>
+        [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Creating a PFX requires lots of types.")]
+        public static void CreatePfxFile(
+            string pemEncodedIntermediateCertificateChainFilePath,
+            string pemEncodedCertificateFilePath,
+            string pemEncodedPrivateKeyFilePath,
+            string unsecurePassword,
+            string outputPfxFilePath,
+            bool overwrite)
+        {
+            new { pemEncodedIntermediateCertificateChainFilePath }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { pemEncodedCertificateFilePath }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { pemEncodedPrivateKeyFilePath }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { outputPfxFilePath }.AsArg().Must().NotBeNullNorWhiteSpace();
+
+            var pemEncodedIntermediateCertificateChain = File.ReadAllText(pemEncodedIntermediateCertificateChainFilePath);
+            var intermediateCertificateChain = CertHelper.ReadCertsFromPemEncodedString(pemEncodedIntermediateCertificateChain);
+
+            var pemEncodedCertificate = File.ReadAllText(pemEncodedCertificateFilePath);
+            var certificate = ReadCertsFromPemEncodedString(pemEncodedCertificate);
+
+            var pemEncodedPrivateKey = File.ReadAllText(pemEncodedPrivateKeyFilePath);
+            var privateKey = ReadPrivateKeyFromPemEncodedString(pemEncodedPrivateKey);
+            
+            var certChain = certificate.Concat(intermediateCertificateChain.OrderCertChainFromLowestToHighestLevelOfTrust()).ToList();
+
+            CreatePfxFile(certChain, privateKey, unsecurePassword, outputPfxFilePath, overwrite);
+        }
+
+        /// <summary>
+        /// Creates a PFX file.
+        /// </summary>
         /// <param name="certChain">The cert chain.  The order of the certificates is inconsequential.</param>
         /// <param name="privateKey">The private key.</param>
         /// <param name="unsecurePassword">The password for the PFX file.</param>
-        /// <param name="pfxFilePath">The path to write the PFX file to.</param>
+        /// <param name="outputPfxFilePath">The path to write the PFX file to.</param>
         /// <param name="overwrite">
-        /// Determines whether to overwrite a file that already exist at <paramref name="pfxFilePath"/>.
+        /// Determines whether to overwrite a file that already exist at <paramref name="outputPfxFilePath"/>.
         /// If false and a file exists at that path, the method will throw.
         /// </param>
         /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
@@ -89,25 +141,25 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentException"><paramref name="privateKey"/> is not private.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="pfxFilePath"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="pfxFilePath"/> is white space.</exception>
-        /// <exception cref="IOException"><paramref name="overwrite"/> is false and there is a file at <paramref name="pfxFilePath"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="outputPfxFilePath"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="outputPfxFilePath"/> is white space.</exception>
+        /// <exception cref="IOException"><paramref name="overwrite"/> is false and there is a file at <paramref name="outputPfxFilePath"/>.</exception>
         [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Creating a PFX requires lots of types.")]
         public static void CreatePfxFile(
             IReadOnlyList<X509Certificate> certChain,
             AsymmetricKeyParameter privateKey,
             string unsecurePassword,
-            string pfxFilePath,
+            string outputPfxFilePath,
             bool overwrite)
         {
             new { certChain }.AsArg().Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
             new { privateKey }.AsArg().Must().NotBeNull();
             new { privateKey.IsPrivate }.AsArg().Must().BeTrue();
             new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
-            new { pfxFilePath }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { outputPfxFilePath }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             var mode = overwrite ? FileMode.Create : FileMode.CreateNew;
-            using (var fileStream = new FileStream(pfxFilePath, mode, FileAccess.Write, FileShare.None))
+            using (var fileStream = new FileStream(outputPfxFilePath, mode, FileAccess.Write, FileShare.None))
             {
                 CreatePfxFile(certChain, privateKey, unsecurePassword, fileStream);
             }
@@ -602,9 +654,9 @@ namespace OBeautifulCode.Security.Recipes
                 {
                     result = null;
                 }
-                else if (pemReaderResult is RsaPrivateCrtKeyParameters rsaKeyPair)
+                else if (pemReaderResult is RsaPrivateCrtKeyParameters rsaPrivateCrtKeyParameters)
                 {
-                    result = rsaKeyPair;
+                    result = rsaPrivateCrtKeyParameters;
                 }
                 else if (pemReaderResult is AsymmetricCipherKeyPair asymmetricCipherKeyPair)
                 {
