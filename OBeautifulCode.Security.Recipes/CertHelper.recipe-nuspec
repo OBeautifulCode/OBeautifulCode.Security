@@ -1,5 +1,5 @@
-﻿<?xml version="1.0"?>
-<package >
+<?xml version="1.0"?>
+<package>
   <metadata>
     <id>OBeautifulCode.Security.Recipes.CertHelper</id>
     <description>Helper methods for dealing with certificates.</description>
@@ -7,8 +7,8 @@
     <iconUrl>https://raw.githubusercontent.com/OBeautifulCode/OBeautifulCode.Security/master/OBeautifulCode.Security.Recipes/nuget-icon.png</iconUrl>
     <dependencies>
       <dependency id="BouncyCastle" version="1.8.5" />
-      <dependency id="OBeautifulCode.Assertion.Recipes.Must" version="1.0.12" />
-      <dependency id="OBeautifulCode.Type" version="1.0.33" />
+      <dependency id="OBeautifulCode.Assertion.Recipes.Must" version="1.0.15" />
+      <dependency id="OBeautifulCode.Type" version="1.0.39" />
     </dependencies>
   </metadata>
   <files>
