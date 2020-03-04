@@ -38,11 +38,11 @@ namespace OBeautifulCode.Security.Recipes
     using Org.BouncyCastle.X509;
     using Org.BouncyCastle.X509.Extension;
 
+    using static System.FormattableString;
+
     using ContentInfo = System.Security.Cryptography.Pkcs.ContentInfo;
     using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
     using X509Extension = Org.BouncyCastle.Asn1.X509.X509Extension;
-
-    using static System.FormattableString;
 
     /// <summary>
     /// Provides helpers methods for dealing with certificates.
@@ -77,7 +77,7 @@ namespace OBeautifulCode.Security.Recipes
             new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             var extractedPfxFile = ExtractCryptographicObjectsFromPfxFile(input, unsecurePassword);
-            
+
             new { extractedPfxFile.PrivateKey }.AsOp().Must().NotBeNull();
 
             var endUserCertificate = extractedPfxFile.CertificateChain.GetEndUserCertFromCertChain();
@@ -86,55 +86,6 @@ namespace OBeautifulCode.Security.Recipes
 
             var result = new AwsCertificateManagerPayload(endUserCertificate.AsPemEncodedString(), extractedPfxFile.PrivateKey.AsPemEncodedString(), intermediateCertChain.AsPemEncodedString());
 
-            return result;
-        }
-
-        /// <summary>
-        /// Creates a certificate signing request.
-        /// </summary>
-        /// <remarks>
-        /// Adapted from: <a href="https://gist.github.com/Venomed/5337717aadfb61b09e58" />.
-        /// Adapted from: <a href="http://perfectresolution.com/2011/10/dynamically-creating-a-csr-private-key-in-net/" />.
-        /// </remarks>
-        /// <param name="asymmetricKeyPair">The asymmetric cipher key pair.</param>
-        /// <param name="signatureAlgorithm">The algorithm to use for signing.</param>
-        /// <param name="attributesInOrder">
-        /// The attributes to use in the subject in the order they should be scanned -
-        /// from most general (e.g. country) to most specific.
-        /// </param>
-        /// <param name="extensions">The x509 extensions to apply.</param>
-        /// <returns>
-        /// A certificate signing request.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="asymmetricKeyPair"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="signatureAlgorithm"/> is <see cref="SignatureAlgorithm.None"/>.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="attributesInOrder"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="attributesInOrder"/> is empty.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="extensions"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="extensions"/> is empty.</exception>
-        [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
-        private static Pkcs10CertificationRequest CreateCsr(
-            this AsymmetricCipherKeyPair asymmetricKeyPair,
-            SignatureAlgorithm signatureAlgorithm,
-            IReadOnlyList<DerObjectValue> attributesInOrder,
-            IReadOnlyDictionary<DerObjectIdentifier, X509Extension> extensions)
-        {
-            new { asymmetricKeyPair }.AsArg().Must().NotBeNull();
-            new { signatureAlgorithm }.AsArg().Must().NotBeEqualTo(SignatureAlgorithm.None);
-            new { attributesInOrder }.AsArg().Must().NotBeNull().And().NotBeEmptyEnumerable();
-            new { extensions }.AsArg().Must().NotBeNull().And().NotBeEmptyEnumerable();
-
-            var signatureFactory = new Asn1SignatureFactory(signatureAlgorithm.ToSignatureAlgorithmString(), asymmetricKeyPair.Private);
-
-            var subject = new X509Name(attributesInOrder.Select(_ => _.Identifier).ToList(), attributesInOrder.Select(_ => _.Value).ToList());
-
-            var extensionsForCsr = extensions.ToDictionary(_ => _.Key, _ => _.Value);
-
-            var result = new Pkcs10CertificationRequest(
-                signatureFactory,
-                subject,
-                asymmetricKeyPair.Public,
-                new DerSet(new AttributePkcs(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(new X509Extensions(extensionsForCsr)))));
             return result;
         }
 
@@ -971,7 +922,7 @@ namespace OBeautifulCode.Security.Recipes
             };
             return result;
         }
-        
+
         /// <summary>
         /// Gets the X509 subject attribute values from a certificate signing request.
         /// </summary>
@@ -1300,7 +1251,56 @@ namespace OBeautifulCode.Security.Recipes
 
             return result;
         }
-        
+
+        /// <summary>
+        /// Creates a certificate signing request.
+        /// </summary>
+        /// <remarks>
+        /// Adapted from: <a href="https://gist.github.com/Venomed/5337717aadfb61b09e58" />.
+        /// Adapted from: <a href="http://perfectresolution.com/2011/10/dynamically-creating-a-csr-private-key-in-net/" />.
+        /// </remarks>
+        /// <param name="asymmetricKeyPair">The asymmetric cipher key pair.</param>
+        /// <param name="signatureAlgorithm">The algorithm to use for signing.</param>
+        /// <param name="attributesInOrder">
+        /// The attributes to use in the subject in the order they should be scanned -
+        /// from most general (e.g. country) to most specific.
+        /// </param>
+        /// <param name="extensions">The x509 extensions to apply.</param>
+        /// <returns>
+        /// A certificate signing request.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="asymmetricKeyPair"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="signatureAlgorithm"/> is <see cref="SignatureAlgorithm.None"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="attributesInOrder"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="attributesInOrder"/> is empty.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="extensions"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="extensions"/> is empty.</exception>
+        [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
+        private static Pkcs10CertificationRequest CreateCsr(
+            this AsymmetricCipherKeyPair asymmetricKeyPair,
+            SignatureAlgorithm signatureAlgorithm,
+            IReadOnlyList<DerObjectValue> attributesInOrder,
+            IReadOnlyDictionary<DerObjectIdentifier, X509Extension> extensions)
+        {
+            new { asymmetricKeyPair }.AsArg().Must().NotBeNull();
+            new { signatureAlgorithm }.AsArg().Must().NotBeEqualTo(SignatureAlgorithm.None);
+            new { attributesInOrder }.AsArg().Must().NotBeNull().And().NotBeEmptyEnumerable();
+            new { extensions }.AsArg().Must().NotBeNull().And().NotBeEmptyEnumerable();
+
+            var signatureFactory = new Asn1SignatureFactory(signatureAlgorithm.ToSignatureAlgorithmString(), asymmetricKeyPair.Private);
+
+            var subject = new X509Name(attributesInOrder.Select(_ => _.Identifier).ToList(), attributesInOrder.Select(_ => _.Value).ToList());
+
+            var extensionsForCsr = extensions.ToDictionary(_ => _.Key, _ => _.Value);
+
+            var result = new Pkcs10CertificationRequest(
+                signatureFactory,
+                subject,
+                asymmetricKeyPair.Public,
+                new DerSet(new AttributePkcs(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(new X509Extensions(extensionsForCsr)))));
+            return result;
+        }
+
         private static string ToSignatureAlgorithmString(
             this SignatureAlgorithm signatureAlgorithm)
         {
