@@ -560,11 +560,19 @@ namespace OBeautifulCode.Security.Recipes
 
             if (cert.HasPrivateKey)
             {
-                var rsa = (RSACryptoServiceProvider)cert.PrivateKey;
+                try
+                {
+                    var rsa = (RSACryptoServiceProvider)cert.PrivateKey;
 
-                var keyPair = DotNetUtilities.GetRsaKeyPair(rsa);
+                    var keyPair = DotNetUtilities.GetRsaKeyPair(rsa);
 
-                privateKey = keyPair.Private;
+                    privateKey = keyPair.Private;
+                }
+                catch (CryptographicException)
+                {
+                    // 1. we have seen cases where cert.PrivateKey throws on a cert that was NOT created using CertHelper
+                    // 2. we have seen cases where .GetRsaKeyPair(rsa) throws on a cert that was installed via a PFX file created by CertHelper (NOT marking the private key as exportable)
+                }
             }
 
             var parser = new X509CertificateParser();
