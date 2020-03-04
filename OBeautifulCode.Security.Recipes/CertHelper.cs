@@ -391,54 +391,228 @@ namespace OBeautifulCode.Security.Recipes
         }
 
         /// <summary>
-        /// Decrypts the specified string.
+        /// Decrypts a string that was encrypted as a base-64 string.
         /// </summary>
-        /// <param name="cipherText">The cipher text to be decrypted.</param>
-        /// <param name="certificates">A set of certificates containing the one that was used to encrypt the cipherText.</param>
+        /// <param name="base64EncodedEncryptedBytes">The base-64 encoded encrypted bytes.</param>
+        /// <param name="certificate">The certificate that was used for encryption.</param>
+        /// <param name="encoding">Optional encoding to use.  Default is to use UTF-8.</param>
         /// <returns>
-        /// The decrypted text.
+        /// The decrypted string.
         /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="cipherText"/> is null.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="certificates"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="certificates"/> is empty or contains a null element.</exception>
-        public static string Decrypt(
-            this string cipherText,
-            params X509Certificate2[] certificates)
+        /// <exception cref="ArgumentNullException"><paramref name="base64EncodedEncryptedBytes"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="certificate"/> is null.</exception>
+        public static string DecryptStringFromBase64String(
+            this string base64EncodedEncryptedBytes,
+            X509Certificate2 certificate,
+            Encoding encoding = null)
         {
-            new { cipherText }.Must().NotBeNull();
-            new { certificates }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
+            new { base64EncodedEncryptedBytes }.Must().NotBeNull();
+            new { certificate }.Must().NotBeNull();
 
-            var certCollection = new X509Certificate2Collection(certificates);
-
-            var envelopedCms = new EnvelopedCms();
-
-            envelopedCms.Decode(Convert.FromBase64String(cipherText));
-
-            envelopedCms.Decrypt(certCollection);
-
-            var result = Encoding.UTF8.GetString(envelopedCms.ContentInfo.Content);
+            var result = base64EncodedEncryptedBytes.DecryptStringFromBase64String(new[] { certificate }, encoding);
 
             return result;
         }
 
         /// <summary>
-        /// Encrypts the specified string.
+        /// Decrypts a string that was encrypted as a base-64 string.
+        /// </summary>
+        /// <param name="base64EncodedEncryptedBytes">The encrypted text to be decrypted.</param>
+        /// <param name="certificates">A set of certificates containing the one that was used for encryption.</param>
+        /// <param name="encoding">Optional encoding to use.  Default is to use UTF-8.</param>
+        /// <returns>
+        /// The decrypted string.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="base64EncodedEncryptedBytes"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="certificates"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certificates"/> is empty or contains a null element.</exception>
+        public static string DecryptStringFromBase64String(
+            this string base64EncodedEncryptedBytes,
+            IReadOnlyCollection<X509Certificate2> certificates,
+            Encoding encoding = null)
+        {
+            new { base64EncodedEncryptedBytes }.Must().NotBeNull();
+            new { certificates }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
+
+            encoding = encoding ?? Encoding.UTF8;
+
+            var decryptedBytes = base64EncodedEncryptedBytes.DecryptByteArrayFromBase64String(certificates);
+
+            var result = encoding.GetString(decryptedBytes);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Decrypts a byte array from a base-64 string.
+        /// </summary>
+        /// <param name="base64EncodedEncryptedBytes">The base-64 encoded encrypted bytes.</param>
+        /// <param name="certificate">The certificate that was used for encryption.</param>
+        /// <returns>
+        /// The decrypted bytes.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="base64EncodedEncryptedBytes"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="certificate"/> is null.</exception>
+        public static byte[] DecryptByteArrayFromBase64String(
+            this string base64EncodedEncryptedBytes,
+            X509Certificate2 certificate)
+        {
+            new { base64EncodedEncryptedBytes }.Must().NotBeNull();
+            new { certificate }.Must().NotBeNull();
+
+            var result = base64EncodedEncryptedBytes.DecryptByteArrayFromBase64String(new[] { certificate });
+
+            return result;
+        }
+
+        /// <summary>
+        /// Decrypts a byte array from a base-64 string.
+        /// </summary>
+        /// <param name="base64EncodedEncryptedBytes">The base-64 encoded encrypted bytes.</param>
+        /// <param name="certificates">A set of certificates containing the one that was used for encryption.</param>
+        /// <returns>
+        /// The decrypted bytes.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="base64EncodedEncryptedBytes"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="certificates"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certificates"/> is empty or contains a null element.</exception>
+        public static byte[] DecryptByteArrayFromBase64String(
+            this string base64EncodedEncryptedBytes,
+            IReadOnlyCollection<X509Certificate2> certificates)
+        {
+            new { base64EncodedEncryptedBytes }.Must().NotBeNull();
+            new { certificates }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
+
+            var encryptedBytes = Convert.FromBase64String(base64EncodedEncryptedBytes);
+
+            var result = encryptedBytes.Decrypt(certificates);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Decrypts a byte array.
+        /// </summary>
+        /// <param name="bytes">The bytes.</param>
+        /// <param name="certificate">The certificate that was used for encryption.</param>
+        /// <returns>
+        /// The decrypted string.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="certificate"/> is null.</exception>
+        public static byte[] Decrypt(
+            this byte[] bytes,
+            X509Certificate2 certificate)
+        {
+            new { bytes }.Must().NotBeNull();
+            new { certificate }.Must().NotBeNull();
+
+            var result = bytes.Decrypt(new[] { certificate });
+
+            return result;
+        }
+
+        /// <summary>
+        /// Decrypts a byte array.
+        /// </summary>
+        /// <param name="bytes">The bytes.</param>
+        /// <param name="certificates">A set of certificates containing the one that was used for encryption.</param>
+        /// <returns>
+        /// The decrypted string.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="certificates"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certificates"/> is empty or contains a null element.</exception>
+        public static byte[] Decrypt(
+            this byte[] bytes,
+            IReadOnlyCollection<X509Certificate2> certificates)
+        {
+            new { bytes }.Must().NotBeNull();
+            new { certificates }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
+
+            var certCollection = new X509Certificate2Collection(certificates.ToArray());
+
+            var envelopedCms = new EnvelopedCms();
+
+            envelopedCms.Decode(bytes);
+
+            envelopedCms.Decrypt(certCollection);
+
+            var result = envelopedCms.ContentInfo.Content;
+
+            return result;
+        }
+
+        /// <summary>
+        /// Encrypts the specified string to a base-64 string.
         /// </summary>
         /// <param name="plaintext">The plaintext to be encrypted.</param>
-        /// <param name="certificate">The certificate to be used for encryption.</param>
+        /// <param name="certificate">The certificate to use for encryption.</param>
+        /// <param name="encoding">Optional encoding to use.  Default is to use UTF-8.</param>
         /// <returns>
-        /// The encrypted text.
+        /// The specified string encrypted as a base-64 string.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="plaintext"/> is null.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="certificate"/> is null.</exception>
-        public static string Encrypt(
+        public static string EncryptToBase64String(
             this string plaintext,
-            X509Certificate2 certificate)
+            X509Certificate2 certificate,
+            Encoding encoding = null)
         {
             new { plaintext }.Must().NotBeNull();
             new { certificate }.Must().NotBeNull();
 
-            var contentInfo = new ContentInfo(Encoding.UTF8.GetBytes(plaintext));
+            encoding = encoding ?? Encoding.UTF8;
+
+            var bytes = encoding.GetBytes(plaintext);
+
+            var result = bytes.EncryptToBase64String(certificate);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Encrypts the specified byte array to a base-64 string.
+        /// </summary>
+        /// <param name="bytes">The bytes to be encrypted.</param>
+        /// <param name="certificate">The certificate to use for encryption.</param>
+        /// <returns>
+        /// The specified byte array encrypted as a base-64 string.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="certificate"/> is null.</exception>
+        public static string EncryptToBase64String(
+            this byte[] bytes,
+            X509Certificate2 certificate)
+        {
+            new { bytes }.Must().NotBeNull();
+            new { certificate }.Must().NotBeNull();
+
+            var encryptedBytes = bytes.Encrypt(certificate);
+
+            var result = Convert.ToBase64String(encryptedBytes);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Encrypts the specified bytes.
+        /// </summary>
+        /// <param name="bytes">The bytes to encrypt.</param>
+        /// <param name="certificate">The certificate to use for encryption.</param>
+        /// <returns>
+        /// The encrypted bytes.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="certificate"/> is null.</exception>
+        public static byte[] Encrypt(
+            this byte[] bytes,
+            X509Certificate2 certificate)
+        {
+            new { bytes }.Must().NotBeNull();
+            new { certificate }.Must().NotBeNull();
+
+            var contentInfo = new ContentInfo(bytes);
 
             var envelopedCms = new EnvelopedCms(contentInfo);
 
@@ -446,7 +620,7 @@ namespace OBeautifulCode.Security.Recipes
 
             envelopedCms.Encrypt(cmsRecipient);
 
-            var result = Convert.ToBase64String(envelopedCms.Encode());
+            var result = envelopedCms.Encode();
 
             return result;
         }
