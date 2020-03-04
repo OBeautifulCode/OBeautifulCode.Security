@@ -134,19 +134,17 @@ namespace OBeautifulCode.Security.Recipes
         /// </summary>
         /// <param name="pemEncodedIntermediateCertificateChainFilePath">Path to a PEM-encoded intermediate certificate chain (often with a 'ca-bundle' extension or file name contains 'bundle').</param>
         /// <param name="pemEncodedCertificateFilePath">Path to PEM-encoded certificate (often with a 'crt' extension).</param>
-        /// <param name="pemEncodedPrivateKeyFilePath">Path to PEM-encoded private key.</param>
         /// <param name="unsecurePassword">The password for the PFX file.</param>
         /// <param name="outputPfxFilePath">The path to write the PFX file to.</param>
         /// <param name="overwrite">
         /// Determines whether to overwrite a file that already exist at <paramref name="outputPfxFilePath"/>.
         /// If false and a file exists at that path, the method will throw.
         /// </param>
+        /// <param name="pemEncodedPrivateKeyFilePath">Optional path to PEM-encoded private key.  Default is null, no private key specified.</param>
         /// <exception cref="ArgumentNullException"><paramref name="pemEncodedIntermediateCertificateChainFilePath"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="pemEncodedIntermediateCertificateChainFilePath"/> is white space.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="pemEncodedCertificateFilePath"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="pemEncodedCertificateFilePath"/> is white space.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedPrivateKeyFilePath"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="pemEncodedPrivateKeyFilePath"/> is white space.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="outputPfxFilePath"/> is null.</exception>
@@ -156,29 +154,36 @@ namespace OBeautifulCode.Security.Recipes
         public static void CreatePfxFile(
             string pemEncodedIntermediateCertificateChainFilePath,
             string pemEncodedCertificateFilePath,
-            string pemEncodedPrivateKeyFilePath,
             string unsecurePassword,
             string outputPfxFilePath,
-            bool overwrite)
+            bool overwrite,
+            string pemEncodedPrivateKeyFilePath = null)
         {
             new { pemEncodedIntermediateCertificateChainFilePath }.AsArg().Must().NotBeNullNorWhiteSpace();
             new { pemEncodedCertificateFilePath }.AsArg().Must().NotBeNullNorWhiteSpace();
-            new { pemEncodedPrivateKeyFilePath }.AsArg().Must().NotBeNullNorWhiteSpace();
             new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
             new { outputPfxFilePath }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             var pemEncodedIntermediateCertificateChain = File.ReadAllText(pemEncodedIntermediateCertificateChainFilePath);
+
             var intermediateCertificateChain = CertHelper.ReadCertsFromPemEncodedString(pemEncodedIntermediateCertificateChain);
 
             var pemEncodedCertificate = File.ReadAllText(pemEncodedCertificateFilePath);
+
             var certificate = ReadCertsFromPemEncodedString(pemEncodedCertificate);
 
-            var pemEncodedPrivateKey = File.ReadAllText(pemEncodedPrivateKeyFilePath);
-            var privateKey = ReadPrivateKeyFromPemEncodedString(pemEncodedPrivateKey);
-            
+            AsymmetricKeyParameter privateKey = null;
+
+            if (!string.IsNullOrWhiteSpace(pemEncodedPrivateKeyFilePath))
+            {
+                var pemEncodedPrivateKey = File.ReadAllText(pemEncodedPrivateKeyFilePath);
+
+                privateKey = ReadPrivateKeyFromPemEncodedString(pemEncodedPrivateKey);
+            }
+
             var certChain = certificate.Concat(intermediateCertificateChain.OrderCertChainFromLowestToHighestLevelOfTrust()).ToList();
 
-            CreatePfxFile(certChain, privateKey, unsecurePassword, outputPfxFilePath, overwrite);
+            CreatePfxFile(certChain, unsecurePassword, outputPfxFilePath, overwrite, privateKey);
         }
 
         /// <summary>
@@ -416,6 +421,7 @@ namespace OBeautifulCode.Security.Recipes
 
             return result;
         }
+
         /// <summary>
         /// Extracts the cryptographic objects contained in a PFX file.
         /// </summary>
