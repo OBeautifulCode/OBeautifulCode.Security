@@ -67,21 +67,6 @@ namespace OBeautifulCode.Security.Recipes.Test
         }
 
         [Fact]
-        public static void Constructor___Should_throw_ArgumentNullException___When_parameter_privateKey_is_null()
-        {
-            // Arrange
-            var pemEncodedCertChain = AssemblyHelper.ReadEmbeddedResourceAsString("cert-chain.pem");
-            var certChain = CertHelper.ReadCertsFromPemEncodedString(pemEncodedCertChain).ToList();
-
-            // Act
-            var ex = Record.Exception(() => new ExtractedPfxFile(certChain, null));
-
-            // Assert
-            ex.Should().BeOfType<ArgumentNullException>();
-            ex.Message.Should().Contain("privateKey");
-        }
-
-        [Fact]
         public static void CertificateChain___Should_return_same_certificateChain_passed_to_constructor___When_getting()
         {
             // Arrange

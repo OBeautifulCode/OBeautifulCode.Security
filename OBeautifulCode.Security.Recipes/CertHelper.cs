@@ -65,6 +65,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
+        /// <exception cref="InvalidOperationException">The PFX file does not contain a private key.</exception>
         public static AwsCertificateManagerPayload CreateAwsCertificateManagerPayloadFromPfx(
             byte[] input,
             string unsecurePassword)
@@ -73,10 +74,15 @@ namespace OBeautifulCode.Security.Recipes
             new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             var extractedPfxFile = ExtractCryptographicObjectsFromPfxFile(input, unsecurePassword);
+            
+            new { extractedPfxFile.PrivateKey }.AsOp().Must().NotBeNull();
+
             var endUserCertificate = extractedPfxFile.CertificateChain.GetEndUserCertFromCertChain();
+
             var intermediateCertChain = extractedPfxFile.CertificateChain.GetIntermediateChainFromCertChain();
 
             var result = new AwsCertificateManagerPayload(endUserCertificate.AsPemEncodedString(), extractedPfxFile.PrivateKey.AsPemEncodedString(), intermediateCertChain.AsPemEncodedString());
+
             return result;
         }
 
