@@ -429,6 +429,65 @@ namespace OBeautifulCode.Security.Recipes
         }
 
         /// <summary>
+        /// Finds a certificate in the specified store.
+        /// </summary>
+        /// <param name="storeLocation">Store location (eg. LocalMachine).</param>
+        /// <param name="storeName">Store name to search for certificate (eg: My).</param>
+        /// <param name="thumbprint">Thumbprint of the certificate to search for.</param>
+        /// <param name="shouldThrowIfNotFound">A value indicating whether to throw an exception if the certificate is not found.</param>
+        /// <param name="shouldThrowIfCertificateIsInvalid">A value indicating whether to throw an exception if the certificate is not valid.</param>
+        /// <returns>
+        /// The certificate if found, otherwise null.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="thumbprint"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="thumbprint"/> is white space.</exception>
+        /// <exception cref="InvalidOperationException">The certificate was not found and <paramref name="shouldThrowIfNotFound"/> is true.</exception>
+        /// <exception cref="InvalidOperationException">Found multiple certificates.</exception>
+        /// <exception cref="InvalidOperationException">The certificate is invalid and <paramref name="shouldThrowIfCertificateIsInvalid"/> is true.</exception>
+        public static X509Certificate2 GetCertificateFromStore(
+            this StoreLocation storeLocation,
+            StoreName storeName,
+            string thumbprint,
+            bool shouldThrowIfNotFound,
+            bool shouldThrowIfCertificateIsInvalid)
+        {
+            var certificateCollection = GetCertificateCollectionFromStore(storeLocation, storeName);
+
+            var potentiallyInvalidCerts = certificateCollection.Find(X509FindType.FindByThumbprint, thumbprint, false);
+
+            if (potentiallyInvalidCerts.Count == 0)
+            {
+                if (shouldThrowIfNotFound)
+                {
+                    throw new InvalidOperationException(Invariant($"Certificate was not found.  Specified thumbprint: {thumbprint}"));
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            if (potentiallyInvalidCerts.Count != 1)
+            {
+                throw new InvalidOperationException(Invariant($"Expected a single certificate but found {potentiallyInvalidCerts.Count} certificates.  Specified thumbprint: {thumbprint}"));
+            }
+
+            if (shouldThrowIfCertificateIsInvalid)
+            {
+                var validCerts = certificateCollection.Find(X509FindType.FindByThumbprint, thumbprint, true);
+
+                if (validCerts.Count != 1)
+                {
+                    throw new InvalidOperationException(Invariant($"The certificate is invalid and {nameof(shouldThrowIfCertificateIsInvalid)} is true.  Specified thumbprint: {thumbprint}"));
+                }
+            }
+
+            var result = potentiallyInvalidCerts[0];
+
+            return result;
+        }
+
+        /// <summary>
         /// Extracts the cryptographic objects contained in a PFX file.
         /// </summary>
         /// <param name="input">A byte array of the PFX.</param>
@@ -502,9 +561,6 @@ namespace OBeautifulCode.Security.Recipes
         /// <param name="filePath">PFX file path to write to.</param>
         /// <param name="shouldThrowIfCertificateIsInvalid">A value indicating whether to throw an exception if the certificate is not valid.</param>
         /// <param name="shouldThrowIfPrivateKeyIsMissing">A value indicating whether to throw an exception if the certificate does not contain a private key.</param>
-        /// <returns>
-        /// Certificate if found, null otherwise.
-        /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="thumbprint"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="thumbprint"/> is white space.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="unsecuredPassword"/> is null.</exception>
@@ -524,32 +580,9 @@ namespace OBeautifulCode.Security.Recipes
         {
             new { thumbprint }.AsArg().Must().NotBeNullNorWhiteSpace();
             new { unsecuredPassword }.AsArg().Must().NotBeNullNorWhiteSpace();
-            
-            var certificateCollection = GetCertificateCollectionFromStore(storeLocation, storeName);
+            new { filePath }.AsArg().Must().NotBeNullNorWhiteSpace();
 
-            var potentiallyInvalidCerts = certificateCollection.Find(X509FindType.FindByThumbprint, thumbprint, false);
-
-            if (potentiallyInvalidCerts.Count == 0)
-            {
-                throw new InvalidOperationException(Invariant($"Certificate was not found.  Specified thumbprint: {thumbprint}"));
-            }
-            
-            if (potentiallyInvalidCerts.Count != 1)
-            {
-                throw new InvalidOperationException(Invariant($"Expected a single certificate but found {potentiallyInvalidCerts.Count} certificates.  Specified thumbprint: {thumbprint}"));
-            }
-
-            if (shouldThrowIfCertificateIsInvalid)
-            {
-                var validCerts = certificateCollection.Find(X509FindType.FindByThumbprint, thumbprint, true);
-
-                if (validCerts.Count != 1)
-                {
-                    throw new InvalidOperationException(Invariant($"The certificate is invalid and {nameof(shouldThrowIfCertificateIsInvalid)} is true.  Specified thumbprint: {thumbprint}"));
-                }
-            }
-
-            var cert = potentiallyInvalidCerts[0];
+            var cert = GetCertificateFromStore(storeLocation, storeName, thumbprint, true, shouldThrowIfCertificateIsInvalid);
 
             if (shouldThrowIfPrivateKeyIsMissing && (!cert.HasPrivateKey))
             {
