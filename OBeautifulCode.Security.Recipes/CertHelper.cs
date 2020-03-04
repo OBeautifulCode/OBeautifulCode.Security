@@ -16,7 +16,9 @@ namespace OBeautifulCode.Security.Recipes
     using System.IO;
     using System.Linq;
     using System.Security.Cryptography;
+    using System.Security.Cryptography.Pkcs;
     using System.Security.Cryptography.X509Certificates;
+    using System.Text;
     using System.Text.RegularExpressions;
 
     using OBeautifulCode.Assertion.Recipes;
@@ -36,6 +38,7 @@ namespace OBeautifulCode.Security.Recipes
     using Org.BouncyCastle.X509;
     using Org.BouncyCastle.X509.Extension;
 
+    using ContentInfo = System.Security.Cryptography.Pkcs.ContentInfo;
     using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
     using X509Extension = Org.BouncyCastle.Asn1.X509.X509Extension;
 
@@ -383,6 +386,67 @@ namespace OBeautifulCode.Security.Recipes
             }
 
             var result = CreateCsr(asymmetricKeyPair, SignatureAlgorithm.Sha1WithRsaEncryption, attributesInOrder, extensions);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Decrypts the specified string.
+        /// </summary>
+        /// <param name="cipherText">The cipher text to be decrypted.</param>
+        /// <param name="certificates">A set of certificates containing the one that was used to encrypt the cipherText.</param>
+        /// <returns>
+        /// The decrypted text.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="cipherText"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="certificates"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certificates"/> is empty or contains a null element.</exception>
+        public static string Decrypt(
+            this string cipherText,
+            params X509Certificate2[] certificates)
+        {
+            new { cipherText }.Must().NotBeNull();
+            new { certificates }.Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
+
+            var certCollection = new X509Certificate2Collection(certificates);
+
+            var envelopedCms = new EnvelopedCms();
+
+            envelopedCms.Decode(Convert.FromBase64String(cipherText));
+
+            envelopedCms.Decrypt(certCollection);
+
+            var result = Encoding.UTF8.GetString(envelopedCms.ContentInfo.Content);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Encrypts the specified string.
+        /// </summary>
+        /// <param name="plaintext">The plaintext to be encrypted.</param>
+        /// <param name="certificate">The certificate to be used for encryption.</param>
+        /// <returns>
+        /// The encrypted text.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="plaintext"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="certificate"/> is null.</exception>
+        public static string Encrypt(
+            this string plaintext,
+            X509Certificate2 certificate)
+        {
+            new { plaintext }.Must().NotBeNull();
+            new { certificate }.Must().NotBeNull();
+
+            var contentInfo = new ContentInfo(Encoding.UTF8.GetBytes(plaintext));
+
+            var envelopedCms = new EnvelopedCms(contentInfo);
+
+            var cmsRecipient = new CmsRecipient(certificate);
+
+            envelopedCms.Encrypt(cmsRecipient);
+
+            var result = Convert.ToBase64String(envelopedCms.Encode());
 
             return result;
         }

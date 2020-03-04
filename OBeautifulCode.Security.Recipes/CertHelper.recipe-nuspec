@@ -5,6 +5,9 @@
     <description>Helper methods for dealing with certificates.</description>
     <tags>certificate signing request csr rsa asymmetric key pem</tags>
     <iconUrl>https://raw.githubusercontent.com/OBeautifulCode/OBeautifulCode.Security/master/OBeautifulCode.Security.Recipes/nuget-icon.png</iconUrl>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System.Security" targetFramework=".NETFramework4.6.2" />
+    </frameworkAssemblies>
     <dependencies>
       <dependency id="BouncyCastle" version="1.8.5" />
       <dependency id="OBeautifulCode.Assertion.Recipes.Must" version="1.0.15" />
