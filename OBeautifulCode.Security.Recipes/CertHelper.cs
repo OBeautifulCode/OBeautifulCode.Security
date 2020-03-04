@@ -55,20 +55,78 @@ namespace OBeautifulCode.Security.Recipes
     static class CertHelper
     {
         /// <summary>
-        /// Creates an RSA asymmetric cipher key pair.
+        /// Creates an AWS Certificate Manager payload from a PFX file.
         /// </summary>
-        /// <param name="rsaKeyLength">The length of the rsa key (e.g. 2048 bits).</param>
+        /// <param name="input">A byte array of the PFX.</param>
+        /// <param name="unsecurePassword">The PFX password in clear-text.</param>
         /// <returns>
-        /// A RSA asymmetric cipher key pair.
+        /// A payload that can be used to load certs into the AWS Certificate Manager via the console.
         /// </returns>
-        public static AsymmetricCipherKeyPair CreateRsaKeyPair(
-            int rsaKeyLength = 2048)
+        /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
+        public static AwsCertificateManagerPayload CreateAwsCertificateManagerPayloadFromPfx(
+            byte[] input,
+            string unsecurePassword)
         {
-            var rsaKeyPairGenerator = new RsaKeyPairGenerator();
-            rsaKeyPairGenerator.Init(new KeyGenerationParameters(new SecureRandom(), rsaKeyLength));
-            var keyPair = rsaKeyPairGenerator.GenerateKeyPair();
+            new { input }.AsArg().Must().NotBeNull();
+            new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
 
-            return keyPair;
+            var extractedPfxFile = ExtractCryptographicObjectsFromPfxFile(input, unsecurePassword);
+            var endUserCertificate = extractedPfxFile.CertificateChain.GetEndUserCertFromCertChain();
+            var intermediateCertChain = extractedPfxFile.CertificateChain.GetIntermediateChainFromCertChain();
+
+            var result = new AwsCertificateManagerPayload(endUserCertificate.AsPemEncodedString(), extractedPfxFile.PrivateKey.AsPemEncodedString(), intermediateCertChain.AsPemEncodedString());
+            return result;
+        }
+
+        /// <summary>
+        /// Creates a certificate signing request.
+        /// </summary>
+        /// <remarks>
+        /// Adapted from: <a href="https://gist.github.com/Venomed/5337717aadfb61b09e58" />.
+        /// Adapted from: <a href="http://perfectresolution.com/2011/10/dynamically-creating-a-csr-private-key-in-net/" />.
+        /// </remarks>
+        /// <param name="asymmetricKeyPair">The asymmetric cipher key pair.</param>
+        /// <param name="signatureAlgorithm">The algorithm to use for signing.</param>
+        /// <param name="attributesInOrder">
+        /// The attributes to use in the subject in the order they should be scanned -
+        /// from most general (e.g. country) to most specific.
+        /// </param>
+        /// <param name="extensions">The x509 extensions to apply.</param>
+        /// <returns>
+        /// A certificate signing request.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="asymmetricKeyPair"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="signatureAlgorithm"/> is <see cref="SignatureAlgorithm.None"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="attributesInOrder"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="attributesInOrder"/> is empty.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="extensions"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="extensions"/> is empty.</exception>
+        [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
+        private static Pkcs10CertificationRequest CreateCsr(
+            this AsymmetricCipherKeyPair asymmetricKeyPair,
+            SignatureAlgorithm signatureAlgorithm,
+            IReadOnlyList<DerObjectValue> attributesInOrder,
+            IReadOnlyDictionary<DerObjectIdentifier, X509Extension> extensions)
+        {
+            new { asymmetricKeyPair }.AsArg().Must().NotBeNull();
+            new { signatureAlgorithm }.AsArg().Must().NotBeEqualTo(SignatureAlgorithm.None);
+            new { attributesInOrder }.AsArg().Must().NotBeNull().And().NotBeEmptyEnumerable();
+            new { extensions }.AsArg().Must().NotBeNull().And().NotBeEmptyEnumerable();
+
+            var signatureFactory = new Asn1SignatureFactory(signatureAlgorithm.ToSignatureAlgorithmString(), asymmetricKeyPair.Private);
+
+            var subject = new X509Name(attributesInOrder.Select(_ => _.Identifier).ToList(), attributesInOrder.Select(_ => _.Value).ToList());
+
+            var extensionsForCsr = extensions.ToDictionary(_ => _.Key, _ => _.Value);
+
+            var result = new Pkcs10CertificationRequest(
+                signatureFactory,
+                subject,
+                asymmetricKeyPair.Public,
+                new DerSet(new AttributePkcs(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(new X509Extensions(extensionsForCsr)))));
+            return result;
         }
 
         /// <summary>
@@ -216,6 +274,23 @@ namespace OBeautifulCode.Security.Recipes
             var firstCertSubjectAttributes = firstCert.GetX509SubjectAttributes();
             store.SetKeyEntry(firstCertSubjectAttributes[X509SubjectAttributeKind.CommonName], keyEntry, certEntries.ToArray());
             store.Save(output, unsecurePassword.ToCharArray(), new SecureRandom());
+        }
+
+        /// <summary>
+        /// Creates an RSA asymmetric cipher key pair.
+        /// </summary>
+        /// <param name="rsaKeyLength">The length of the rsa key (e.g. 2048 bits).</param>
+        /// <returns>
+        /// A RSA asymmetric cipher key pair.
+        /// </returns>
+        public static AsymmetricCipherKeyPair CreateRsaKeyPair(
+            int rsaKeyLength = 2048)
+        {
+            var rsaKeyPairGenerator = new RsaKeyPairGenerator();
+            rsaKeyPairGenerator.Init(new KeyGenerationParameters(new SecureRandom(), rsaKeyLength));
+            var keyPair = rsaKeyPairGenerator.GenerateKeyPair();
+
+            return keyPair;
         }
 
         /// <summary>
@@ -447,257 +522,6 @@ namespace OBeautifulCode.Security.Recipes
         }
 
         /// <summary>
-        /// Re-orders a certificate chain from lowest to highest level of trust.
-        /// </summary>
-        /// <param name="certChain">The certificate chain to re-order.</param>
-        /// <returns>
-        /// The certificates in the specified chain, ordered from lowest to highest level of trust.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
-        /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
-        /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
-        public static IReadOnlyList<X509Certificate> OrderCertChainFromLowestToHighestLevelOfTrust(
-            this IReadOnlyCollection<X509Certificate> certChain)
-        {
-            new { certChain }.AsArg().Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
-
-            var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Reverse().ToList();
-            return result;
-        }
-
-        /// <summary>
-        /// Re-orders a certificate chain from highest to lowest level of trust.
-        /// </summary>
-        /// <param name="certChain">The certificate chain to re-order.</param>
-        /// <returns>
-        /// The certificates in the specified chain, ordered from highest to lowest level of trust.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
-        /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
-        /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
-        [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "This is a good use of catching general exception types.")]
-        public static IReadOnlyList<X509Certificate> OrderCertChainFromHighestToLowestLevelOfTrust(
-            this IReadOnlyCollection<X509Certificate> certChain)
-        {
-            new { certChain }.AsArg().Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
-
-            certChain = certChain.Distinct().ToList();
-
-            // for every cert, record which other certs verify it
-            var parentCertsByChildCert = new Dictionary<X509Certificate, List<X509Certificate>>();
-            foreach (var cert in certChain)
-            {
-                parentCertsByChildCert.Add(cert, new List<X509Certificate>());
-
-                var otherCerts = certChain.Except(new[] { cert }).ToList();
-                foreach (var otherCert in otherCerts)
-                {
-                    try
-                    {
-                        cert.Verify(otherCert.GetPublicKey());
-                        parentCertsByChildCert[cert].Add(otherCert);
-                    }
-
-                    // ReSharper disable once EmptyGeneralCatchClause
-                    catch (Exception)
-                    {
-                    }
-                }
-            }
-
-            // any cert has two parents?
-            if (parentCertsByChildCert.Values.Any(_ => _.Count > 1))
-            {
-                throw new ArgumentException("the cert chain is malformed");
-            }
-
-            // should only be one cert with no parent
-            if (parentCertsByChildCert.Values.Count(_ => !_.Any()) != 1)
-            {
-                throw new ArgumentException("the cert chain is malformed");
-            }
-
-            // identify and remove the root cert, the remaining certs should have only one parent
-            var rootCert = parentCertsByChildCert.Single(_ => !_.Value.Any()).Key;
-            parentCertsByChildCert.Remove(rootCert);
-
-            // no two certs should have the same parent
-            if (parentCertsByChildCert.SelectMany(_ => _.Value).Distinct().Count() != parentCertsByChildCert.Count)
-            {
-                throw new ArgumentException("the cert chain is malformed");
-            }
-
-            // flip it and index the certs by parent
-            var childCertByParentCert = parentCertsByChildCert.ToDictionary(_ => _.Value.Single(), _ => _.Key);
-            var result = new List<X509Certificate> { rootCert };
-            while (childCertByParentCert.ContainsKey(result.Last()))
-            {
-                result.Add(childCertByParentCert[result.Last()]);
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Reads one or more certs encoded in PEM.
-        /// </summary>
-        /// <param name="pemEncodedCerts">The PEM encoded certificates.</param>
-        /// <returns>
-        /// The certificates.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedCerts"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="pemEncodedCerts"/> is white space.</exception>
-        public static IReadOnlyList<X509Certificate> ReadCertsFromPemEncodedString(
-            string pemEncodedCerts)
-        {
-            new { pemEncodedCerts }.AsArg().Must().NotBeNullNorWhiteSpace();
-
-            // remove empty lines - required so that PemReader.ReadObject doesn't return null in-between returning certs
-            pemEncodedCerts = Regex.Replace(pemEncodedCerts, @"^\s*$[\r\n]*", string.Empty, RegexOptions.Multiline);
-
-            var result = new List<X509Certificate>();
-            using (var stringReader = new StringReader(pemEncodedCerts))
-            {
-                var pemReader = new PemReader(stringReader);
-                var certObject = pemReader.ReadObject();
-                while (certObject != null)
-                {
-                    var cert = certObject as X509Certificate;
-                    result.Add(cert);
-                    certObject = pemReader.ReadObject();
-                }
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Extracts a certificate chain from PKCS#7 CMS payload encoded in PEM.
-        /// </summary>
-        /// <param name="pemEncodedPkcs7">The payload containing the PKCS#7 CMS data.</param>
-        /// <remarks>
-        /// The method is expecting a PKCS#7/CMS SignedData structure containing no "content" and zero SignerInfos.
-        /// </remarks>
-        /// <returns>
-        /// The certificate chain contained in the specified payload.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedPkcs7"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="pemEncodedPkcs7"/> is white space.</exception>
-        public static IReadOnlyList<X509Certificate> ReadCertChainFromPemEncodedPkcs7CmsString(
-            string pemEncodedPkcs7)
-        {
-            new { pemEncodedPkcs7 }.AsArg().Must().NotBeNullNorWhiteSpace();
-
-            IReadOnlyList<X509Certificate> result;
-            using (var stringReader = new StringReader(pemEncodedPkcs7))
-            {
-                var pemReader = new PemReader(stringReader);
-                var pemObject = pemReader.ReadPemObject();
-                var data = new CmsSignedData(pemObject.Content);
-                var certStore = data.GetCertificates("COLLECTION");
-                result = certStore.GetMatches(null).Cast<X509Certificate>().ToList();
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Reads a certificate signing request encoded in PEM.
-        /// </summary>
-        /// <param name="pemEncodedCsr">The PEM encoded certificate signing request.</param>
-        /// <returns>
-        /// The certificate signing request.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedCsr"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="pemEncodedCsr"/> is white space.</exception>
-        public static Pkcs10CertificationRequest ReadCsrFromPemEncodedString(
-            string pemEncodedCsr)
-        {
-            new { pemEncodedCsr }.AsArg().Must().NotBeNullNorWhiteSpace();
-
-            Pkcs10CertificationRequest result;
-            using (var stringReader = new StringReader(pemEncodedCsr))
-            {
-                var pemReader = new PemReader(stringReader);
-                var pemObject = pemReader.ReadPemObject();
-                result = new Pkcs10CertificationRequest(pemObject.Content);
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Reads a private key encoded in PEM.
-        /// </summary>
-        /// <param name="pemEncodedPrivateKey">The PEM encoded private key.</param>
-        /// <returns>
-        /// The private key.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedPrivateKey"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="pemEncodedPrivateKey"/> is white space.</exception>
-        public static AsymmetricKeyParameter ReadPrivateKeyFromPemEncodedString(
-            string pemEncodedPrivateKey)
-        {
-            new { pemEncodedPrivateKey }.AsArg().Must().NotBeNullNorWhiteSpace();
-
-            AsymmetricKeyParameter result;
-
-            using (var stringReader = new StringReader(pemEncodedPrivateKey))
-            {
-                var pemReader = new PemReader(stringReader);
-
-                var pemReaderResult = pemReader.ReadObject();
-
-                if (pemReaderResult == null)
-                {
-                    result = null;
-                }
-                else if (pemReaderResult is RsaPrivateCrtKeyParameters rsaPrivateCrtKeyParameters)
-                {
-                    result = rsaPrivateCrtKeyParameters;
-                }
-                else if (pemReaderResult is AsymmetricCipherKeyPair asymmetricCipherKeyPair)
-                {
-                    result = asymmetricCipherKeyPair?.Private;
-                }
-                else
-                {
-                    throw new NotSupportedException("Type of PEM encoded private key not supported: " + pemReaderResult?.GetType());
-                }
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Gets the X509 field values from a certificate.
-        /// </summary>
-        /// <param name="cert">The certificate.</param>
-        /// <returns>
-        /// The X509 field values indexed by the kind of field.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="cert"/> is null.</exception>
-        public static IReadOnlyDictionary<X509FieldKind, string> GetX509Fields(
-            this X509Certificate cert)
-        {
-            new { cert }.AsArg().Must().NotBeNull();
-
-            var result = new Dictionary<X509FieldKind, string>
-            {
-                { X509FieldKind.IssuerName, cert.IssuerDN?.ToString() },
-                { X509FieldKind.NotAfter, cert.NotAfter.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture) },
-                { X509FieldKind.NotBefore, cert.NotBefore.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture) },
-                { X509FieldKind.SerialNumber, cert.SerialNumber?.ToString() },
-                { X509FieldKind.SignatureAlgorithmName, cert.SigAlgName },
-                { X509FieldKind.SubjectName, cert.SubjectDN?.ToString() },
-                { X509FieldKind.Version, cert.Version.ToString(CultureInfo.InvariantCulture) },
-            };
-            return result;
-        }
-
-        /// <summary>
         /// Gets the thumbprint of an X509 certificate.
         /// </summary>
         /// <param name="cert">The certificate.</param>
@@ -737,6 +561,32 @@ namespace OBeautifulCode.Security.Recipes
             return result;
         }
 
+        /// <summary>
+        /// Gets the X509 field values from a certificate.
+        /// </summary>
+        /// <param name="cert">The certificate.</param>
+        /// <returns>
+        /// The X509 field values indexed by the kind of field.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="cert"/> is null.</exception>
+        public static IReadOnlyDictionary<X509FieldKind, string> GetX509Fields(
+            this X509Certificate cert)
+        {
+            new { cert }.AsArg().Must().NotBeNull();
+
+            var result = new Dictionary<X509FieldKind, string>
+            {
+                { X509FieldKind.IssuerName, cert.IssuerDN?.ToString() },
+                { X509FieldKind.NotAfter, cert.NotAfter.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture) },
+                { X509FieldKind.NotBefore, cert.NotBefore.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture) },
+                { X509FieldKind.SerialNumber, cert.SerialNumber?.ToString() },
+                { X509FieldKind.SignatureAlgorithmName, cert.SigAlgName },
+                { X509FieldKind.SubjectName, cert.SubjectDN?.ToString() },
+                { X509FieldKind.Version, cert.Version.ToString(CultureInfo.InvariantCulture) },
+            };
+            return result;
+        }
+        
         /// <summary>
         /// Gets the X509 subject attribute values from a certificate signing request.
         /// </summary>
@@ -842,80 +692,230 @@ namespace OBeautifulCode.Security.Recipes
         }
 
         /// <summary>
-        /// Creates an AWS Certificate Manager payload from a PFX file.
+        /// Re-orders a certificate chain from lowest to highest level of trust.
         /// </summary>
-        /// <param name="input">A byte array of the PFX.</param>
-        /// <param name="unsecurePassword">The PFX password in clear-text.</param>
+        /// <param name="certChain">The certificate chain to re-order.</param>
         /// <returns>
-        /// A payload that can be used to load certs into the AWS Certificate Manager via the console.
+        /// The certificates in the specified chain, ordered from lowest to highest level of trust.
         /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
-        public static AwsCertificateManagerPayload CreateAwsCertificateManagerPayloadFromPfx(
-            byte[] input,
-            string unsecurePassword)
+        /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
+        public static IReadOnlyList<X509Certificate> OrderCertChainFromLowestToHighestLevelOfTrust(
+            this IReadOnlyCollection<X509Certificate> certChain)
         {
-            new { input }.AsArg().Must().NotBeNull();
-            new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { certChain }.AsArg().Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
 
-            var extractedPfxFile = ExtractCryptographicObjectsFromPfxFile(input, unsecurePassword);
-            var endUserCertificate = extractedPfxFile.CertificateChain.GetEndUserCertFromCertChain();
-            var intermediateCertChain = extractedPfxFile.CertificateChain.GetIntermediateChainFromCertChain();
-
-            var result = new AwsCertificateManagerPayload(endUserCertificate.AsPemEncodedString(), extractedPfxFile.PrivateKey.AsPemEncodedString(), intermediateCertChain.AsPemEncodedString());
+            var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Reverse().ToList();
             return result;
         }
 
         /// <summary>
-        /// Creates a certificate signing request.
+        /// Re-orders a certificate chain from highest to lowest level of trust.
         /// </summary>
-        /// <remarks>
-        /// Adapted from: <a href="https://gist.github.com/Venomed/5337717aadfb61b09e58" />.
-        /// Adapted from: <a href="http://perfectresolution.com/2011/10/dynamically-creating-a-csr-private-key-in-net/" />.
-        /// </remarks>
-        /// <param name="asymmetricKeyPair">The asymmetric cipher key pair.</param>
-        /// <param name="signatureAlgorithm">The algorithm to use for signing.</param>
-        /// <param name="attributesInOrder">
-        /// The attributes to use in the subject in the order they should be scanned -
-        /// from most general (e.g. country) to most specific.
-        /// </param>
-        /// <param name="extensions">The x509 extensions to apply.</param>
+        /// <param name="certChain">The certificate chain to re-order.</param>
         /// <returns>
-        /// A certificate signing request.
+        /// The certificates in the specified chain, ordered from highest to lowest level of trust.
         /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="asymmetricKeyPair"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="signatureAlgorithm"/> is <see cref="SignatureAlgorithm.None"/>.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="attributesInOrder"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="attributesInOrder"/> is empty.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="extensions"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="extensions"/> is empty.</exception>
-        [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
-        private static Pkcs10CertificationRequest CreateCsr(
-            this AsymmetricCipherKeyPair asymmetricKeyPair,
-            SignatureAlgorithm signatureAlgorithm,
-            IReadOnlyList<DerObjectValue> attributesInOrder,
-            IReadOnlyDictionary<DerObjectIdentifier, X509Extension> extensions)
+        /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
+        /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
+        [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "This is a good use of catching general exception types.")]
+        public static IReadOnlyList<X509Certificate> OrderCertChainFromHighestToLowestLevelOfTrust(
+            this IReadOnlyCollection<X509Certificate> certChain)
         {
-            new { asymmetricKeyPair }.AsArg().Must().NotBeNull();
-            new { signatureAlgorithm }.AsArg().Must().NotBeEqualTo(SignatureAlgorithm.None);
-            new { attributesInOrder }.AsArg().Must().NotBeNull().And().NotBeEmptyEnumerable();
-            new { extensions }.AsArg().Must().NotBeNull().And().NotBeEmptyEnumerable();
+            new { certChain }.AsArg().Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
 
-            var signatureFactory = new Asn1SignatureFactory(signatureAlgorithm.ToSignatureAlgorithmString(), asymmetricKeyPair.Private);
+            certChain = certChain.Distinct().ToList();
 
-            var subject = new X509Name(attributesInOrder.Select(_ => _.Identifier).ToList(), attributesInOrder.Select(_ => _.Value).ToList());
+            // for every cert, record which other certs verify it
+            var parentCertsByChildCert = new Dictionary<X509Certificate, List<X509Certificate>>();
+            foreach (var cert in certChain)
+            {
+                parentCertsByChildCert.Add(cert, new List<X509Certificate>());
 
-            var extensionsForCsr = extensions.ToDictionary(_ => _.Key, _ => _.Value);
+                var otherCerts = certChain.Except(new[] { cert }).ToList();
+                foreach (var otherCert in otherCerts)
+                {
+                    try
+                    {
+                        cert.Verify(otherCert.GetPublicKey());
+                        parentCertsByChildCert[cert].Add(otherCert);
+                    }
 
-            var result = new Pkcs10CertificationRequest(
-                signatureFactory,
-                subject,
-                asymmetricKeyPair.Public,
-                new DerSet(new AttributePkcs(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(new X509Extensions(extensionsForCsr)))));
+                    // ReSharper disable once EmptyGeneralCatchClause
+                    catch (Exception)
+                    {
+                    }
+                }
+            }
+
+            // any cert has two parents?
+            if (parentCertsByChildCert.Values.Any(_ => _.Count > 1))
+            {
+                throw new ArgumentException("the cert chain is malformed");
+            }
+
+            // should only be one cert with no parent
+            if (parentCertsByChildCert.Values.Count(_ => !_.Any()) != 1)
+            {
+                throw new ArgumentException("the cert chain is malformed");
+            }
+
+            // identify and remove the root cert, the remaining certs should have only one parent
+            var rootCert = parentCertsByChildCert.Single(_ => !_.Value.Any()).Key;
+            parentCertsByChildCert.Remove(rootCert);
+
+            // no two certs should have the same parent
+            if (parentCertsByChildCert.SelectMany(_ => _.Value).Distinct().Count() != parentCertsByChildCert.Count)
+            {
+                throw new ArgumentException("the cert chain is malformed");
+            }
+
+            // flip it and index the certs by parent
+            var childCertByParentCert = parentCertsByChildCert.ToDictionary(_ => _.Value.Single(), _ => _.Key);
+            var result = new List<X509Certificate> { rootCert };
+            while (childCertByParentCert.ContainsKey(result.Last()))
+            {
+                result.Add(childCertByParentCert[result.Last()]);
+            }
+
             return result;
         }
 
+        /// <summary>
+        /// Extracts a certificate chain from PKCS#7 CMS payload encoded in PEM.
+        /// </summary>
+        /// <param name="pemEncodedPkcs7">The payload containing the PKCS#7 CMS data.</param>
+        /// <remarks>
+        /// The method is expecting a PKCS#7/CMS SignedData structure containing no "content" and zero SignerInfos.
+        /// </remarks>
+        /// <returns>
+        /// The certificate chain contained in the specified payload.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedPkcs7"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pemEncodedPkcs7"/> is white space.</exception>
+        public static IReadOnlyList<X509Certificate> ReadCertChainFromPemEncodedPkcs7CmsString(
+            string pemEncodedPkcs7)
+        {
+            new { pemEncodedPkcs7 }.AsArg().Must().NotBeNullNorWhiteSpace();
+
+            IReadOnlyList<X509Certificate> result;
+            using (var stringReader = new StringReader(pemEncodedPkcs7))
+            {
+                var pemReader = new PemReader(stringReader);
+                var pemObject = pemReader.ReadPemObject();
+                var data = new CmsSignedData(pemObject.Content);
+                var certStore = data.GetCertificates("COLLECTION");
+                result = certStore.GetMatches(null).Cast<X509Certificate>().ToList();
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Reads one or more certs encoded in PEM.
+        /// </summary>
+        /// <param name="pemEncodedCerts">The PEM encoded certificates.</param>
+        /// <returns>
+        /// The certificates.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedCerts"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pemEncodedCerts"/> is white space.</exception>
+        public static IReadOnlyList<X509Certificate> ReadCertsFromPemEncodedString(
+            string pemEncodedCerts)
+        {
+            new { pemEncodedCerts }.AsArg().Must().NotBeNullNorWhiteSpace();
+
+            // remove empty lines - required so that PemReader.ReadObject doesn't return null in-between returning certs
+            pemEncodedCerts = Regex.Replace(pemEncodedCerts, @"^\s*$[\r\n]*", string.Empty, RegexOptions.Multiline);
+
+            var result = new List<X509Certificate>();
+            using (var stringReader = new StringReader(pemEncodedCerts))
+            {
+                var pemReader = new PemReader(stringReader);
+                var certObject = pemReader.ReadObject();
+                while (certObject != null)
+                {
+                    var cert = certObject as X509Certificate;
+                    result.Add(cert);
+                    certObject = pemReader.ReadObject();
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Reads a certificate signing request encoded in PEM.
+        /// </summary>
+        /// <param name="pemEncodedCsr">The PEM encoded certificate signing request.</param>
+        /// <returns>
+        /// The certificate signing request.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedCsr"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pemEncodedCsr"/> is white space.</exception>
+        public static Pkcs10CertificationRequest ReadCsrFromPemEncodedString(
+            string pemEncodedCsr)
+        {
+            new { pemEncodedCsr }.AsArg().Must().NotBeNullNorWhiteSpace();
+
+            Pkcs10CertificationRequest result;
+            using (var stringReader = new StringReader(pemEncodedCsr))
+            {
+                var pemReader = new PemReader(stringReader);
+                var pemObject = pemReader.ReadPemObject();
+                result = new Pkcs10CertificationRequest(pemObject.Content);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Reads a private key encoded in PEM.
+        /// </summary>
+        /// <param name="pemEncodedPrivateKey">The PEM encoded private key.</param>
+        /// <returns>
+        /// The private key.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedPrivateKey"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pemEncodedPrivateKey"/> is white space.</exception>
+        public static AsymmetricKeyParameter ReadPrivateKeyFromPemEncodedString(
+            string pemEncodedPrivateKey)
+        {
+            new { pemEncodedPrivateKey }.AsArg().Must().NotBeNullNorWhiteSpace();
+
+            AsymmetricKeyParameter result;
+
+            using (var stringReader = new StringReader(pemEncodedPrivateKey))
+            {
+                var pemReader = new PemReader(stringReader);
+
+                var pemReaderResult = pemReader.ReadObject();
+
+                if (pemReaderResult == null)
+                {
+                    result = null;
+                }
+                else if (pemReaderResult is RsaPrivateCrtKeyParameters rsaPrivateCrtKeyParameters)
+                {
+                    result = rsaPrivateCrtKeyParameters;
+                }
+                else if (pemReaderResult is AsymmetricCipherKeyPair asymmetricCipherKeyPair)
+                {
+                    result = asymmetricCipherKeyPair?.Private;
+                }
+                else
+                {
+                    throw new NotSupportedException("Type of PEM encoded private key not supported: " + pemReaderResult?.GetType());
+                }
+            }
+
+            return result;
+        }
+        
         private static string ToSignatureAlgorithmString(
             this SignatureAlgorithm signatureAlgorithm)
         {
