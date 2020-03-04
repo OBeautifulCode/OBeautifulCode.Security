@@ -61,22 +61,22 @@ namespace OBeautifulCode.Security.Recipes
         /// Creates an AWS Certificate Manager payload from a PFX file.
         /// </summary>
         /// <param name="input">A byte array of the PFX.</param>
-        /// <param name="unsecurePassword">The PFX password in clear-text.</param>
+        /// <param name="cleartextPassword">The PFX password in clear-text.</param>
         /// <returns>
         /// A payload that can be used to load certs into the AWS Certificate Manager via the console.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="cleartextPassword"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="cleartextPassword"/> is white space.</exception>
         /// <exception cref="InvalidOperationException">The PFX file does not contain a private key.</exception>
         public static AwsCertificateManagerPayload CreateAwsCertificateManagerPayloadFromPfx(
             byte[] input,
-            string unsecurePassword)
+            string cleartextPassword)
         {
             new { input }.AsArg().Must().NotBeNull();
-            new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { cleartextPassword }.AsArg().Must().NotBeNullNorWhiteSpace();
 
-            var extractedPfxFile = ExtractCryptographicObjectsFromPfxFile(input, unsecurePassword);
+            var extractedPfxFile = ExtractCryptographicObjectsFromPfxFile(input, cleartextPassword);
 
             new { extractedPfxFile.PrivateKey }.AsOp().Must().NotBeNull();
 
@@ -94,7 +94,7 @@ namespace OBeautifulCode.Security.Recipes
         /// </summary>
         /// <param name="pemEncodedIntermediateCertificateChainFilePath">Path to a PEM-encoded intermediate certificate chain (often with a 'ca-bundle' extension or file name contains 'bundle').</param>
         /// <param name="pemEncodedCertificateFilePath">Path to PEM-encoded certificate (often with a 'crt' extension).</param>
-        /// <param name="unsecurePassword">The password for the PFX file.</param>
+        /// <param name="cleartextPassword">The password for the PFX file.</param>
         /// <param name="outputPfxFilePath">The path to write the PFX file to.</param>
         /// <param name="overwrite">
         /// Determines whether to overwrite a file that already exist at <paramref name="outputPfxFilePath"/>.
@@ -105,8 +105,8 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentException"><paramref name="pemEncodedIntermediateCertificateChainFilePath"/> is white space.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="pemEncodedCertificateFilePath"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="pemEncodedCertificateFilePath"/> is white space.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="cleartextPassword"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="cleartextPassword"/> is white space.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="outputPfxFilePath"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="outputPfxFilePath"/> is white space.</exception>
         /// <exception cref="IOException"><paramref name="overwrite"/> is false and there is a file at <paramref name="outputPfxFilePath"/>.</exception>
@@ -114,14 +114,14 @@ namespace OBeautifulCode.Security.Recipes
         public static void CreatePfxFile(
             string pemEncodedIntermediateCertificateChainFilePath,
             string pemEncodedCertificateFilePath,
-            string unsecurePassword,
+            string cleartextPassword,
             string outputPfxFilePath,
             bool overwrite,
             string pemEncodedPrivateKeyFilePath = null)
         {
             new { pemEncodedIntermediateCertificateChainFilePath }.AsArg().Must().NotBeNullNorWhiteSpace();
             new { pemEncodedCertificateFilePath }.AsArg().Must().NotBeNullNorWhiteSpace();
-            new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { cleartextPassword }.AsArg().Must().NotBeNullNorWhiteSpace();
             new { outputPfxFilePath }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             var pemEncodedIntermediateCertificateChain = File.ReadAllText(pemEncodedIntermediateCertificateChainFilePath);
@@ -143,14 +143,14 @@ namespace OBeautifulCode.Security.Recipes
 
             var certChain = certificate.Concat(intermediateCertificateChain.OrderCertChainFromLowestToHighestLevelOfTrust()).ToList();
 
-            CreatePfxFile(certChain, unsecurePassword, outputPfxFilePath, overwrite, privateKey);
+            CreatePfxFile(certChain, cleartextPassword, outputPfxFilePath, overwrite, privateKey);
         }
 
         /// <summary>
         /// Creates a PFX file.
         /// </summary>
         /// <param name="certChain">The cert chain.  The order of the certificates is inconsequential.</param>
-        /// <param name="unsecurePassword">The password for the PFX file.</param>
+        /// <param name="cleartextPassword">The password for the PFX file.</param>
         /// <param name="outputPfxFilePath">The path to write the PFX file to.</param>
         /// <param name="overwrite">
         /// Determines whether to overwrite a file that already exist at <paramref name="outputPfxFilePath"/>.
@@ -160,8 +160,8 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="cleartextPassword"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="cleartextPassword"/> is white space.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="outputPfxFilePath"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="outputPfxFilePath"/> is white space.</exception>
         /// <exception cref="ArgumentException"><paramref name="privateKey"/> is not null and not private.</exception>
@@ -169,13 +169,13 @@ namespace OBeautifulCode.Security.Recipes
         [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Creating a PFX requires lots of types.")]
         public static void CreatePfxFile(
             IReadOnlyList<X509Certificate> certChain,
-            string unsecurePassword,
+            string cleartextPassword,
             string outputPfxFilePath,
             bool overwrite,
             AsymmetricKeyParameter privateKey = null)
         {
             new { certChain }.AsArg().Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
-            new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { cleartextPassword }.AsArg().Must().NotBeNullNorWhiteSpace();
             new { outputPfxFilePath }.AsArg().Must().NotBeNullNorWhiteSpace();
             if (privateKey != null)
             {
@@ -185,7 +185,7 @@ namespace OBeautifulCode.Security.Recipes
             var mode = overwrite ? FileMode.Create : FileMode.CreateNew;
             using (var fileStream = new FileStream(outputPfxFilePath, mode, FileAccess.Write, FileShare.None))
             {
-                CreatePfxFile(certChain, unsecurePassword, fileStream, privateKey);
+                CreatePfxFile(certChain, cleartextPassword, fileStream, privateKey);
             }
         }
 
@@ -196,26 +196,26 @@ namespace OBeautifulCode.Security.Recipes
         /// adapted from: <a href="https://boredwookie.net/blog/m/bouncy-castle-create-a-basic-certificate" />.
         /// </remarks>
         /// <param name="certChain">The cert chain.  The order of the certificates is inconsequential.</param>
-        /// <param name="unsecurePassword">The password for the PFX file.</param>
+        /// <param name="cleartextPassword">The password for the PFX file.</param>
         /// <param name="output">The stream to write the PFX file to.</param>
         /// <param name="privateKey">Optional private key to include in the PFX.</param>
         /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="cleartextPassword"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="cleartextPassword"/> is white space.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="output"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="output"/> is not writable.</exception>
         /// <exception cref="ArgumentException"><paramref name="privateKey"/> is not null and not private.</exception>
         [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Creating a PFX requires lots of types.")]
         public static void CreatePfxFile(
             IReadOnlyList<X509Certificate> certChain,
-            string unsecurePassword,
+            string cleartextPassword,
             Stream output,
             AsymmetricKeyParameter privateKey = null)
         {
             new { certChain }.AsArg().Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
-            new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { cleartextPassword }.AsArg().Must().NotBeNullNorWhiteSpace();
             new { output }.AsArg().Must().NotBeNull();
             new { output.CanWrite }.AsArg().Must().BeTrue();
             if (privateKey != null)
@@ -253,7 +253,7 @@ namespace OBeautifulCode.Security.Recipes
                 store.SetKeyEntry(firstCertSubjectAttributes[X509SubjectAttributeKind.CommonName], keyEntry, certEntries.ToArray());
             }
 
-            store.Save(output, unsecurePassword.ToCharArray(), new SecureRandom());
+            store.Save(output, cleartextPassword.ToCharArray(), new SecureRandom());
         }
 
         /// <summary>
@@ -680,23 +680,23 @@ namespace OBeautifulCode.Security.Recipes
         /// Extracts the cryptographic objects contained in a PFX file.
         /// </summary>
         /// <param name="input">A byte array of the PFX.</param>
-        /// <param name="unsecurePassword">The PFX password in clear-text.</param>
+        /// <param name="cleartextPassword">The PFX password in clear-text.</param>
         /// <returns>
         /// The cryptographic objects contained in the specified PFX file.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="cleartextPassword"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="cleartextPassword"/> is white space.</exception>
         public static ExtractedPfxFile ExtractCryptographicObjectsFromPfxFile(
             byte[] input,
-            string unsecurePassword)
+            string cleartextPassword)
         {
             new { input }.AsArg().Must().NotBeNull();
-            new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { cleartextPassword }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             using (var inputStream = new MemoryStream(input))
             {
-                var result = ExtractCryptographicObjectsFromPfxFile(inputStream, unsecurePassword);
+                var result = ExtractCryptographicObjectsFromPfxFile(inputStream, cleartextPassword);
                 return result;
             }
         }
@@ -705,23 +705,23 @@ namespace OBeautifulCode.Security.Recipes
         /// Extracts the cryptographic objects contained in a PFX file.
         /// </summary>
         /// <param name="input">A stream with the PFX.</param>
-        /// <param name="unsecurePassword">The PFX password in clear-text.</param>
+        /// <param name="cleartextPassword">The PFX password in clear-text.</param>
         /// <returns>
         /// The cryptographic objects contained in the specified PFX file.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="input"/> is not readable.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="cleartextPassword"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="cleartextPassword"/> is white space.</exception>
         public static ExtractedPfxFile ExtractCryptographicObjectsFromPfxFile(
             Stream input,
-            string unsecurePassword)
+            string cleartextPassword)
         {
             new { input }.AsArg().Must().NotBeNull();
             new { input.CanRead }.AsArg().Must().BeTrue();
-            new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { cleartextPassword }.AsArg().Must().NotBeNullNorWhiteSpace();
 
-            var store = new Pkcs12Store(input, unsecurePassword.ToCharArray());
+            var store = new Pkcs12Store(input, cleartextPassword.ToCharArray());
             var aliases = store.Aliases;
 
             var certificateChain = new List<X509Certificate>();
@@ -1241,11 +1241,11 @@ namespace OBeautifulCode.Security.Recipes
                 }
                 else if (pemReaderResult is AsymmetricCipherKeyPair asymmetricCipherKeyPair)
                 {
-                    result = asymmetricCipherKeyPair?.Private;
+                    result = asymmetricCipherKeyPair.Private;
                 }
                 else
                 {
-                    throw new NotSupportedException("Type of PEM encoded private key not supported: " + pemReaderResult?.GetType());
+                    throw new NotSupportedException("Type of PEM encoded private key not supported: " + pemReaderResult.GetType());
                 }
             }
 
