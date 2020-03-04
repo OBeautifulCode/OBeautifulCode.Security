@@ -185,41 +185,42 @@ namespace OBeautifulCode.Security.Recipes
         /// Creates a PFX file.
         /// </summary>
         /// <param name="certChain">The cert chain.  The order of the certificates is inconsequential.</param>
-        /// <param name="privateKey">The private key.</param>
         /// <param name="unsecurePassword">The password for the PFX file.</param>
         /// <param name="outputPfxFilePath">The path to write the PFX file to.</param>
         /// <param name="overwrite">
         /// Determines whether to overwrite a file that already exist at <paramref name="outputPfxFilePath"/>.
         /// If false and a file exists at that path, the method will throw.
         /// </param>
+        /// <param name="privateKey">Optional private key to include in the PFX.</param>
         /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="privateKey"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="privateKey"/> is not private.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="outputPfxFilePath"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="outputPfxFilePath"/> is white space.</exception>
+        /// <exception cref="ArgumentException"><paramref name="privateKey"/> is not null and not private.</exception>
         /// <exception cref="IOException"><paramref name="overwrite"/> is false and there is a file at <paramref name="outputPfxFilePath"/>.</exception>
         [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Creating a PFX requires lots of types.")]
         public static void CreatePfxFile(
             IReadOnlyList<X509Certificate> certChain,
-            AsymmetricKeyParameter privateKey,
             string unsecurePassword,
             string outputPfxFilePath,
-            bool overwrite)
+            bool overwrite,
+            AsymmetricKeyParameter privateKey = null)
         {
             new { certChain }.AsArg().Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
-            new { privateKey }.AsArg().Must().NotBeNull();
-            new { privateKey.IsPrivate }.AsArg().Must().BeTrue();
             new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
             new { outputPfxFilePath }.AsArg().Must().NotBeNullNorWhiteSpace();
+            if (privateKey != null)
+            {
+                new { privateKey.IsPrivate }.AsArg().Must().BeTrue();
+            }
 
             var mode = overwrite ? FileMode.Create : FileMode.CreateNew;
             using (var fileStream = new FileStream(outputPfxFilePath, mode, FileAccess.Write, FileShare.None))
             {
-                CreatePfxFile(certChain, privateKey, unsecurePassword, fileStream);
+                CreatePfxFile(certChain, unsecurePassword, fileStream, privateKey);
             }
         }
 
@@ -230,49 +231,63 @@ namespace OBeautifulCode.Security.Recipes
         /// adapted from: <a href="https://boredwookie.net/blog/m/bouncy-castle-create-a-basic-certificate" />.
         /// </remarks>
         /// <param name="certChain">The cert chain.  The order of the certificates is inconsequential.</param>
-        /// <param name="privateKey">The private key.</param>
         /// <param name="unsecurePassword">The password for the PFX file.</param>
         /// <param name="output">The stream to write the PFX file to.</param>
+        /// <param name="privateKey">Optional private key to include in the PFX.</param>
         /// <exception cref="ArgumentNullException"><paramref name="certChain"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="privateKey"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="privateKey"/> is not private.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="unsecurePassword"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="unsecurePassword"/> is white space.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="output"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="output"/> is not writable.</exception>
+        /// <exception cref="ArgumentException"><paramref name="privateKey"/> is not null and not private.</exception>
         [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Creating a PFX requires lots of types.")]
         public static void CreatePfxFile(
             IReadOnlyList<X509Certificate> certChain,
-            AsymmetricKeyParameter privateKey,
             string unsecurePassword,
-            Stream output)
+            Stream output,
+            AsymmetricKeyParameter privateKey = null)
         {
             new { certChain }.AsArg().Must().NotBeNullNorEmptyEnumerableNorContainAnyNulls();
-            new { privateKey }.AsArg().Must().NotBeNull();
-            new { privateKey.IsPrivate }.AsArg().Must().BeTrue();
             new { unsecurePassword }.AsArg().Must().NotBeNullNorWhiteSpace();
             new { output }.AsArg().Must().NotBeNull();
             new { output.CanWrite }.AsArg().Must().BeTrue();
+            if (privateKey != null)
+            {
+                new { privateKey.IsPrivate }.AsArg().Must().BeTrue();
+            }
 
             certChain = certChain.OrderCertChainFromLowestToHighestLevelOfTrust();
 
             var store = new Pkcs12StoreBuilder().Build();
+
             var certEntries = new List<X509CertificateEntry>();
+
             foreach (var cert in certChain)
             {
                 var certEntry = new X509CertificateEntry(cert);
+
                 certEntries.Add(certEntry);
+
                 var certSubjectAttributes = cert.GetX509SubjectAttributes();
+
                 var certStoreKey = certSubjectAttributes[X509SubjectAttributeKind.CommonName];
+
                 store.SetCertificateEntry(certStoreKey, certEntry);
             }
 
-            var keyEntry = new AsymmetricKeyEntry(privateKey);
-            var firstCert = certChain.First();
-            var firstCertSubjectAttributes = firstCert.GetX509SubjectAttributes();
-            store.SetKeyEntry(firstCertSubjectAttributes[X509SubjectAttributeKind.CommonName], keyEntry, certEntries.ToArray());
+            if (privateKey != null)
+            {
+                var keyEntry = new AsymmetricKeyEntry(privateKey);
+
+                var firstCert = certChain.First();
+
+                var firstCertSubjectAttributes = firstCert.GetX509SubjectAttributes();
+
+                store.SetKeyEntry(firstCertSubjectAttributes[X509SubjectAttributeKind.CommonName], keyEntry, certEntries.ToArray());
+            }
+
             store.Save(output, unsecurePassword.ToCharArray(), new SecureRandom());
         }
 
@@ -433,51 +448,90 @@ namespace OBeautifulCode.Security.Recipes
         /// <param name="thumbprint">Thumbprint of the certificate to search for.</param>
         /// <param name="unsecuredPassword">Password to use for PFX file.</param>
         /// <param name="filePath">PFX file path to write to.</param>
-        /// <returns>Certificate if found, null otherwise.</returns>
+        /// <param name="shouldThrowIfCertificateIsInvalid">A value indicating whether to throw an exception if the certificate is not valid.</param>
+        /// <param name="shouldThrowIfPrivateKeyIsMissing">A value indicating whether to throw an exception if the certificate does not contain a private key.</param>
+        /// <returns>
+        /// Certificate if found, null otherwise.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="thumbprint"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="thumbprint"/> is white space.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="unsecuredPassword"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="unsecuredPassword"/> is white space.</exception>
+        /// <exception cref="InvalidOperationException">The certificate was not found.</exception>
+        /// <exception cref="InvalidOperationException">Found multiple certificates.</exception>
+        /// <exception cref="InvalidOperationException">The certificate is invalid and <paramref name="shouldThrowIfCertificateIsInvalid"/> is true.</exception>
+        /// <exception cref="InvalidOperationException">The certificate does not contain the private key and <paramref name="shouldThrowIfPrivateKeyIsMissing"/> is true.</exception>
         public static void ExportPfxFromCertificateStoreToFile(
             this StoreLocation storeLocation,
             StoreName storeName,
             string thumbprint,
             string unsecuredPassword,
-            string filePath)
+            string filePath,
+            bool shouldThrowIfCertificateIsInvalid,
+            bool shouldThrowIfPrivateKeyIsMissing)
         {
             new { thumbprint }.AsArg().Must().NotBeNullNorWhiteSpace();
             new { unsecuredPassword }.AsArg().Must().NotBeNullNorWhiteSpace();
+            
+            var certificateCollection = GetCertificateCollectionFromStore(storeLocation, storeName);
 
-            using (var store = new X509Store(storeName, storeLocation))
+            var potentiallyInvalidCerts = certificateCollection.Find(X509FindType.FindByThumbprint, thumbprint, false);
+
+            if (potentiallyInvalidCerts.Count == 0)
             {
-                store.Open(OpenFlags.ReadOnly);
-                var certs = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
-                if (certs.Count != 1)
+                throw new InvalidOperationException(Invariant($"Certificate was not found.  Specified thumbprint: {thumbprint}"));
+            }
+            
+            if (potentiallyInvalidCerts.Count != 1)
+            {
+                throw new InvalidOperationException(Invariant($"Expected a single certificate but found {potentiallyInvalidCerts.Count} certificates.  Specified thumbprint: {thumbprint}"));
+            }
+
+            if (shouldThrowIfCertificateIsInvalid)
+            {
+                var validCerts = certificateCollection.Find(X509FindType.FindByThumbprint, thumbprint, true);
+
+                if (validCerts.Count != 1)
                 {
-                    throw new ArgumentException(Invariant($"Expected a single cert; found: {certs.Count}"));
-                }
-
-                var cert = certs[0];
-                if (!cert.HasPrivateKey)
-                {
-                    throw new ArgumentException("Doesn't have private key for cert to export.");
-                }
-
-                var rsa = (RSACryptoServiceProvider)cert.PrivateKey;
-                var keyPair = DotNetUtilities.GetRsaKeyPair(rsa);
-                var privateKey = keyPair.Private;
-
-                var parser = new X509CertificateParser();
-                var bouncyCerts = new List<X509Certificate>();
-
-                using (var chain = new X509Chain())
-                {
-                    chain.Build(cert);
-                    foreach (var chainElement in chain.ChainElements)
-                    {
-                        var bouncyCert = parser.ReadCertificate(chainElement.Certificate.Export(X509ContentType.Cert));
-                        bouncyCerts.Add(bouncyCert);
-                    }
-
-                    CreatePfxFile(bouncyCerts, privateKey, unsecuredPassword, filePath, true);
+                    throw new InvalidOperationException(Invariant($"The certificate is invalid and {nameof(shouldThrowIfCertificateIsInvalid)} is true.  Specified thumbprint: {thumbprint}"));
                 }
             }
+
+            var cert = potentiallyInvalidCerts[0];
+
+            if (shouldThrowIfPrivateKeyIsMissing && (!cert.HasPrivateKey))
+            {
+                throw new InvalidOperationException(Invariant($"The certificate does not contain the private key and {nameof(shouldThrowIfPrivateKeyIsMissing)} is true.  Specified thumbprint: {thumbprint}"));
+            }
+
+            AsymmetricKeyParameter privateKey = null;
+
+            if (cert.HasPrivateKey)
+            {
+                var rsa = (RSACryptoServiceProvider)cert.PrivateKey;
+
+                var keyPair = DotNetUtilities.GetRsaKeyPair(rsa);
+
+                privateKey = keyPair.Private;
+            }
+
+            var parser = new X509CertificateParser();
+
+            var bouncyCerts = new List<X509Certificate>();
+
+            using (var chain = new X509Chain())
+            {
+                chain.Build(cert);
+
+                foreach (var chainElement in chain.ChainElements)
+                {
+                    var bouncyCert = parser.ReadCertificate(chainElement.Certificate.Export(X509ContentType.Cert));
+
+                    bouncyCerts.Add(bouncyCert);
+                }
+            }
+
+            CreatePfxFile(bouncyCerts, unsecuredPassword, filePath, true, privateKey);
         }
 
         /// <summary>
