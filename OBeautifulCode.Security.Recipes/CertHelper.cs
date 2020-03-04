@@ -377,6 +377,46 @@ namespace OBeautifulCode.Security.Recipes
         }
 
         /// <summary>
+        /// Gets a certificate collection from the certificate store.
+        /// </summary>
+        /// <param name="storeLocation">The store location.</param>
+        /// <param name="storeName">The name of the store.</param>
+        /// <returns>
+        /// A certificate collection.
+        /// </returns>
+        public static X509Certificate2Collection GetCertificateCollectionFromStore(
+            StoreLocation storeLocation,
+            StoreName storeName)
+        {
+            using (var store = new X509Store(storeName, storeLocation))
+            {
+                store.Open(OpenFlags.ReadOnly);
+
+                var result = store.Certificates;
+
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// Gets certificates from the certificate store.
+        /// </summary>
+        /// <param name="storeLocation">The store location.</param>
+        /// <param name="storeName">The name of the store.</param>
+        /// <returns>
+        /// Certificates from the certificate store.
+        /// </returns>
+        public static IReadOnlyCollection<X509Certificate2> GetCertificatesFromStore(
+            StoreLocation storeLocation,
+            StoreName storeName)
+        {
+            var certificateCollection = GetCertificateCollectionFromStore(storeLocation, storeName);
+
+            var result = certificateCollection.OfType<X509Certificate2>().ToList();
+
+            return result;
+        }
+        /// <summary>
         /// Extracts the cryptographic objects contained in a PFX file.
         /// </summary>
         /// <param name="input">A byte array of the PFX.</param>
