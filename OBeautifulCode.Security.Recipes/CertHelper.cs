@@ -1306,6 +1306,7 @@ namespace OBeautifulCode.Security.Recipes
         /// The X509 subject attribute values indexed by the kind of subject attribute.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="csr"/> is null.</exception>
+        [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = "Specifically supporting this kind of CSR.")]
         public static IReadOnlyDictionary<X509SubjectAttributeKind, string> GetX509SubjectAttributes(
             this Pkcs10CertificationRequest csr)
         {
@@ -1455,7 +1456,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
-        [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "This is a good use of catching general exception types.")]
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = ObcSuppressBecause.CA1502_AvoidExcessiveComplexity_DisagreeWithAssessment)]
         public static IReadOnlyList<X509Certificate> OrderCertChainFromHighestToLowestLevelOfTrust(
             this IReadOnlyCollection<X509Certificate> certChain)
         {

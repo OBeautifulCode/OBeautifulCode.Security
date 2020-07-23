@@ -10,7 +10,7 @@
     </frameworkAssemblies>
     <dependencies>
       <dependency id="BouncyCastle" version="1.8.5" />
-      <dependency id="OBeautifulCode.Type" version="1.0.39" />
+      <dependency id="OBeautifulCode.Type" version="1.0.51" />
     </dependencies>
   </metadata>
   <files>
