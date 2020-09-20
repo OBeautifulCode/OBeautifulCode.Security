@@ -10,11 +10,11 @@
     </frameworkAssemblies>
     <dependencies>
       <dependency id="BouncyCastle" version="1.8.5" />
-      <dependency id="OBeautifulCode.Type" version="1.0.51" />
+      <dependency id="OBeautifulCode.Type" version="1.0.69" />
+      <dependency id="OBeautifulCode.CodeAnalysis.Recipes.SuppressBecause" version="1.0.6" />
     </dependencies>
   </metadata>
   <files>
-    <file src=".analyzers\SuppressBecause.cs" target="content\net462\.recipes\OBeautifulCode.Security\SuppressBecause.cs" />
     <file src="PemHelper.cs" target="content\net462\.recipes\OBeautifulCode.Security\PemHelper.cs" />
     <file src="CertHelper.cs" target="content\net462\.recipes\OBeautifulCode.Security\CertHelper.cs" />
     <file src="SignatureAlgorithm.cs" target="content\net462\.recipes\OBeautifulCode.Security\SignatureAlgorithm.cs" />

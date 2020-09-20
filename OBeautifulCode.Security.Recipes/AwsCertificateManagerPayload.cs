@@ -9,14 +9,14 @@
 
 namespace OBeautifulCode.Security.Recipes
 {
-    using System;
+    using global::System;
 
-    using static System.FormattableString;
+    using static global::System.FormattableString;
 
     /// <summary>
     /// Container for payload require to load certificates into the AWS Certificate Manager.
     /// </summary>
-#if !OBeautifulCodeSecurityRecipesProject
+#if !OBeautifulCodeSecuritySolution
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     [System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Security.Recipes", "See package version number")]
     internal

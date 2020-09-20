@@ -9,12 +9,12 @@
 
 namespace OBeautifulCode.Security.Recipes
 {
-    using System.Diagnostics.CodeAnalysis;
+    using global::System.Diagnostics.CodeAnalysis;
 
     /// <summary>
     /// A signature algorithm.
     /// </summary>
-#if !OBeautifulCodeSecurityRecipesProject
+#if !OBeautifulCodeSecuritySolution
     [System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Security.Recipes", "See package version number")]
     internal
 #else

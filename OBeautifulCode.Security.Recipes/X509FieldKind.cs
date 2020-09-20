@@ -12,7 +12,7 @@ namespace OBeautifulCode.Security.Recipes
     /// <summary>
     /// The kind of field of an X509 certificate.
     /// </summary>
-#if !OBeautifulCodeSecurityRecipesProject
+#if !OBeautifulCodeSecuritySolution
     [System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Security.Recipes", "See package version number")]
     internal
 #else
