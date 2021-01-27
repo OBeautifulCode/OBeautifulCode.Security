@@ -24,8 +24,8 @@ namespace OBeautifulCode.Security.Recipes
     /// Contains helper methods for creating PEM encoded data.
     /// </summary>
 #if !OBeautifulCodeSecuritySolution
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-    [System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Security.Recipes", "See package version number")]
+    [global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [global::System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Security.Recipes", "See package version number")]
     internal
 #else
     public

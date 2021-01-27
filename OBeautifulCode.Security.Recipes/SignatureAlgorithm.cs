@@ -15,7 +15,7 @@ namespace OBeautifulCode.Security.Recipes
     /// A signature algorithm.
     /// </summary>
 #if !OBeautifulCodeSecuritySolution
-    [System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Security.Recipes", "See package version number")]
+    [global::System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Security.Recipes", "See package version number")]
     internal
 #else
     public

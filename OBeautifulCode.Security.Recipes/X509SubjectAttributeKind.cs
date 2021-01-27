@@ -13,7 +13,7 @@ namespace OBeautifulCode.Security.Recipes
     /// The kind of attribute contained within the subject of an X509 certificate.
     /// </summary>
 #if !OBeautifulCodeSecuritySolution
-    [System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Security.Recipes", "See package version number")]
+    [global::System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Security.Recipes", "See package version number")]
     internal
 #else
     public
