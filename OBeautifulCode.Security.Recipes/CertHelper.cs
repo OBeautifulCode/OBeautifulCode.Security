@@ -408,6 +408,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <param name="locality">The locality (e.g. "Seattle").</param>
         /// <param name="state">The state (e.g. "Washington").</param>
         /// <param name="country">The country (e.g. "US").</param>
+        /// <param name="signatureAlgorithm">OPTIONAL signature algorithm to use.  DEFAULT is SHA1 with RSA.</param>
         /// <returns>
         /// The certificate signing request.
         /// </returns>
@@ -423,7 +424,8 @@ namespace OBeautifulCode.Security.Recipes
             string organization,
             string locality,
             string state,
-            string country)
+            string country,
+            SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.Sha1WithRsaEncryption)
         {
             if (asymmetricKeyPair == null)
             {
@@ -515,7 +517,7 @@ namespace OBeautifulCode.Security.Recipes
                 extensions.Add(X509Extensions.SubjectAlternativeName, new X509Extension(false, new DerOctetString(new GeneralNames(generalNames))));
             }
 
-            var result = CreateCsr(asymmetricKeyPair, SignatureAlgorithm.Sha1WithRsaEncryption, attributesInOrder, extensions);
+            var result = CreateCsr(asymmetricKeyPair, signatureAlgorithm, attributesInOrder, extensions);
 
             return result;
         }
@@ -1766,6 +1768,7 @@ namespace OBeautifulCode.Security.Recipes
                 subject,
                 asymmetricKeyPair.Public,
                 new DerSet(new AttributePkcs(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(new X509Extensions(extensionsForCsr)))));
+
             return result;
         }
 
