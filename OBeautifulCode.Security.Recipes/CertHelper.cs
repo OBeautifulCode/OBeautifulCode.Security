@@ -32,6 +32,7 @@ namespace OBeautifulCode.Security.Recipes
     using Org.BouncyCastle.Crypto.Generators;
     using Org.BouncyCastle.Crypto.Operators;
     using Org.BouncyCastle.Crypto.Parameters;
+    using Org.BouncyCastle.Math;
     using Org.BouncyCastle.OpenSsl;
     using Org.BouncyCastle.Pkcs;
     using Org.BouncyCastle.Security;
@@ -66,7 +67,6 @@ namespace OBeautifulCode.Security.Recipes
         /// A payload that can be used to load certs into the AWS Certificate Manager via the console.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="input"/> is null.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="clearTextPassword"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="clearTextPassword"/> is white space.</exception>
         /// <exception cref="InvalidOperationException">The PFX file does not contain a private key.</exception>
         public static AwsCertificateManagerPayload CreateAwsCertificateManagerPayloadFromPfx(
@@ -427,97 +427,77 @@ namespace OBeautifulCode.Security.Recipes
             string country,
             SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.Sha1WithRsaEncryption)
         {
-            if (asymmetricKeyPair == null)
+            var sslCreationInfo = GetSslCreationInfo(asymmetricKeyPair, commonName, subjectAlternativeNames, organizationalUnit, organization, locality, state, country, signatureAlgorithm);
+
+            var extensionsForCsr = sslCreationInfo.OidToExtensionMap.ToDictionary(_ => _.Key, _ => _.Value);
+
+            var result = new Pkcs10CertificationRequest(
+                sslCreationInfo.SignatureFactory,
+                sslCreationInfo.Subject,
+                asymmetricKeyPair.Public,
+                new DerSet(new AttributePkcs(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(new X509Extensions(extensionsForCsr)))));
+
+            return result;
+        }
+
+        /// <summary>
+        /// Creates a self-signed SSL certificate.
+        /// </summary>
+        /// <param name="asymmetricKeyPair">The asymmetric cipher key pair.</param>
+        /// <param name="commonName">The common name (e.g. "example.com").</param>
+        /// <param name="subjectAlternativeNames">Optional.  The subject alternative names. (e.g. "shopping.example.com", "mail.example.com").</param>
+        /// <param name="organizationalUnit">The organizational unit (e.g. "Engineering Dept").</param>
+        /// <param name="organization">The organization (e.g. "The Example Company").</param>
+        /// <param name="locality">The locality (e.g. "Seattle").</param>
+        /// <param name="state">The state (e.g. "Washington").</param>
+        /// <param name="country">The country (e.g. "US").</param>
+        /// <param name="validityTimeRange">The validity time range.</param>
+        /// <param name="signatureAlgorithm">OPTIONAL signature algorithm to use.  DEFAULT is SHA1 with RSA.</param>
+        /// <returns>
+        /// The certificate.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="asymmetricKeyPair"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="commonName"/> or <paramref name="organizationalUnit"/>or <paramref name="organization"/> or <paramref name="locality"/> or <paramref name="state"/> or <paramref name="country"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="commonName"/> or <paramref name="organizationalUnit"/> or <paramref name="organization"/> or <paramref name="locality"/> or <paramref name="state"/> or <paramref name="country"/> is white space.</exception>
+        [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
+        public static X509Certificate CreateSelfSignedSslCertificate(
+            this AsymmetricCipherKeyPair asymmetricKeyPair,
+            string commonName,
+            IReadOnlyCollection<string> subjectAlternativeNames,
+            string organizationalUnit,
+            string organization,
+            string locality,
+            string state,
+            string country,
+            UtcDateTimeRangeInclusive validityTimeRange,
+            SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.Sha1WithRsaEncryption)
+        {
+            var sslCreationInfo = GetSslCreationInfo(asymmetricKeyPair, commonName, subjectAlternativeNames, organizationalUnit, organization, locality, state, country, signatureAlgorithm);
+
+            var generator = new X509V3CertificateGenerator();
+
+            foreach (var extensionIdentifier in sslCreationInfo.OidToExtensionMap.Keys)
             {
-                throw new ArgumentNullException(nameof(asymmetricKeyPair));
+                var extension = sslCreationInfo.OidToExtensionMap[extensionIdentifier];
+
+                generator.AddExtension(extensionIdentifier, extension.IsCritical, extension.GetParsedValue());
             }
 
-            if (commonName == null)
-            {
-                throw new ArgumentNullException(nameof(commonName));
-            }
+            generator.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifierStructure(asymmetricKeyPair.Public));
 
-            if (string.IsNullOrWhiteSpace(commonName))
-            {
-                throw new ArgumentException(Invariant($"'{nameof(commonName)}' is white space"));
-            }
+            generator.SetSubjectDN(sslCreationInfo.Subject);
 
-            if (organizationalUnit == null)
-            {
-                throw new ArgumentNullException(nameof(organizationalUnit));
-            }
+            generator.SetPublicKey(asymmetricKeyPair.Public);
 
-            if (string.IsNullOrWhiteSpace(organizationalUnit))
-            {
-                throw new ArgumentException(Invariant($"'{nameof(organizationalUnit)}' is white space"));
-            }
+            generator.SetIssuerDN(sslCreationInfo.Subject);
 
-            if (organization == null)
-            {
-                throw new ArgumentNullException(nameof(organization));
-            }
+            generator.SetNotBefore(validityTimeRange.StartDateTimeInUtc);
 
-            if (string.IsNullOrWhiteSpace(organization))
-            {
-                throw new ArgumentException(Invariant($"'{nameof(organization)}' is white space"));
-            }
+            generator.SetNotAfter(validityTimeRange.EndDateTimeInUtc);
 
-            if (locality == null)
-            {
-                throw new ArgumentNullException(nameof(locality));
-            }
+            generator.SetSerialNumber(new BigInteger(DateTime.UtcNow.Ticks.ToString()));
 
-            if (string.IsNullOrWhiteSpace(locality))
-            {
-                throw new ArgumentException(Invariant($"'{nameof(locality)}' is white space"));
-            }
-
-            if (state == null)
-            {
-                throw new ArgumentNullException(nameof(state));
-            }
-
-            if (string.IsNullOrWhiteSpace(state))
-            {
-                throw new ArgumentException(Invariant($"'{nameof(state)}' is white space"));
-            }
-
-            if (country == null)
-            {
-                throw new ArgumentNullException(nameof(country));
-            }
-
-            if (string.IsNullOrWhiteSpace(country))
-            {
-                throw new ArgumentException(Invariant($"'{nameof(country)}' is white space"));
-            }
-
-            var attributesInOrder = new List<DerObjectValue>
-            {
-                new DerObjectValue(X509Name.C, country),
-                new DerObjectValue(X509Name.ST, state),
-                new DerObjectValue(X509Name.L, locality),
-                new DerObjectValue(X509Name.O, organization),
-                new DerObjectValue(X509Name.OU, organizationalUnit),
-                new DerObjectValue(X509Name.CN, commonName),
-            };
-
-            var extensions = new Dictionary<DerObjectIdentifier, X509Extension>
-            {
-                { X509Extensions.BasicConstraints, new X509Extension(true, new DerOctetString(new BasicConstraints(false))) },
-                { X509Extensions.KeyUsage, new X509Extension(true, new DerOctetString(new KeyUsage(KeyUsage.DigitalSignature | KeyUsage.KeyEncipherment | KeyUsage.DataEncipherment | KeyUsage.NonRepudiation))) },
-                { X509Extensions.ExtendedKeyUsage, new X509Extension(false, new DerOctetString(new ExtendedKeyUsage(KeyPurposeID.IdKPServerAuth, KeyPurposeID.IdKPClientAuth))) },
-                { X509Extensions.SubjectKeyIdentifier, new X509Extension(false, new DerOctetString(new SubjectKeyIdentifierStructure(asymmetricKeyPair.Public))) },
-            };
-
-            if ((subjectAlternativeNames != null) && subjectAlternativeNames.Any())
-            {
-                var generalNames = subjectAlternativeNames.Select(_ => new GeneralName(GeneralName.DnsName, _)).ToArray();
-
-                extensions.Add(X509Extensions.SubjectAlternativeName, new X509Extension(false, new DerOctetString(new GeneralNames(generalNames))));
-            }
-
-            var result = CreateCsr(asymmetricKeyPair, signatureAlgorithm, attributesInOrder, extensions);
+            var result = generator.Generate(sslCreationInfo.SignatureFactory);
 
             return result;
         }
@@ -1444,6 +1424,7 @@ namespace OBeautifulCode.Security.Recipes
             }
 
             var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Reverse().ToList();
+
             return result;
         }
 
@@ -1697,77 +1678,117 @@ namespace OBeautifulCode.Security.Recipes
             return result;
         }
 
-        /// <summary>
-        /// Creates a certificate signing request.
-        /// </summary>
-        /// <remarks>
-        /// Adapted from: <a href="https://gist.github.com/Venomed/5337717aadfb61b09e58" />.
-        /// Adapted from: <a href="http://perfectresolution.com/2011/10/dynamically-creating-a-csr-private-key-in-net/" />.
-        /// </remarks>
-        /// <param name="asymmetricKeyPair">The asymmetric cipher key pair.</param>
-        /// <param name="signatureAlgorithm">The algorithm to use for signing.</param>
-        /// <param name="attributesInOrder">
-        /// The attributes to use in the subject in the order they should be scanned -
-        /// from most general (e.g. country) to most specific.
-        /// </param>
-        /// <param name="extensions">The x509 extensions to apply.</param>
-        /// <returns>
-        /// A certificate signing request.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="asymmetricKeyPair"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="signatureAlgorithm"/> is <see cref="SignatureAlgorithm.None"/>.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="attributesInOrder"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="attributesInOrder"/> is empty.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="extensions"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="extensions"/> is empty.</exception>
-        [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
-        private static Pkcs10CertificationRequest CreateCsr(
+        private static SslCreationInfo GetSslCreationInfo(
             this AsymmetricCipherKeyPair asymmetricKeyPair,
-            SignatureAlgorithm signatureAlgorithm,
-            IReadOnlyList<DerObjectValue> attributesInOrder,
-            IReadOnlyDictionary<DerObjectIdentifier, X509Extension> extensions)
+            string commonName,
+            IReadOnlyCollection<string> subjectAlternativeNames,
+            string organizationalUnit,
+            string organization,
+            string locality,
+            string state,
+            string country,
+            SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.Sha1WithRsaEncryption)
         {
             if (asymmetricKeyPair == null)
             {
                 throw new ArgumentNullException(nameof(asymmetricKeyPair));
             }
 
-            if (signatureAlgorithm == SignatureAlgorithm.None)
+            if (commonName == null)
             {
-                throw new ArgumentOutOfRangeException(Invariant($"'{nameof(signatureAlgorithm)}' == '{SignatureAlgorithm.None}'"), (Exception)null);
+                throw new ArgumentNullException(nameof(commonName));
             }
 
-            if (attributesInOrder == null)
+            if (string.IsNullOrWhiteSpace(commonName))
             {
-                throw new ArgumentNullException(nameof(attributesInOrder));
+                throw new ArgumentException(Invariant($"'{nameof(commonName)}' is white space"));
             }
 
-            if (!attributesInOrder.Any())
+            if (organizationalUnit == null)
             {
-                throw new ArgumentException(Invariant($"'{nameof(attributesInOrder)}' is an empty enumerable"));
-            }
-                
-            if (extensions == null)
-            {
-                throw new ArgumentNullException(nameof(extensions));
+                throw new ArgumentNullException(nameof(organizationalUnit));
             }
 
-            if (!extensions.Any())
+            if (string.IsNullOrWhiteSpace(organizationalUnit))
             {
-                throw new ArgumentException(Invariant($"'{nameof(extensions)}' is an empty enumerable"));
+                throw new ArgumentException(Invariant($"'{nameof(organizationalUnit)}' is white space"));
+            }
+
+            if (organization == null)
+            {
+                throw new ArgumentNullException(nameof(organization));
+            }
+
+            if (string.IsNullOrWhiteSpace(organization))
+            {
+                throw new ArgumentException(Invariant($"'{nameof(organization)}' is white space"));
+            }
+
+            if (locality == null)
+            {
+                throw new ArgumentNullException(nameof(locality));
+            }
+
+            if (string.IsNullOrWhiteSpace(locality))
+            {
+                throw new ArgumentException(Invariant($"'{nameof(locality)}' is white space"));
+            }
+
+            if (state == null)
+            {
+                throw new ArgumentNullException(nameof(state));
+            }
+
+            if (string.IsNullOrWhiteSpace(state))
+            {
+                throw new ArgumentException(Invariant($"'{nameof(state)}' is white space"));
+            }
+
+            if (country == null)
+            {
+                throw new ArgumentNullException(nameof(country));
+            }
+
+            if (string.IsNullOrWhiteSpace(country))
+            {
+                throw new ArgumentException(Invariant($"'{nameof(country)}' is white space"));
+            }
+
+            var attributesInOrder = new List<DerObjectValue>
+            {
+                new DerObjectValue(X509Name.C, country),
+                new DerObjectValue(X509Name.ST, state),
+                new DerObjectValue(X509Name.L, locality),
+                new DerObjectValue(X509Name.O, organization),
+                new DerObjectValue(X509Name.OU, organizationalUnit),
+                new DerObjectValue(X509Name.CN, commonName),
+            };
+
+            var subject = new X509Name(attributesInOrder.Select(_ => _.Identifier).ToList(), attributesInOrder.Select(_ => _.Value).ToList());
+
+            var oidToExtensionMap = new Dictionary<DerObjectIdentifier, X509Extension>
+            {
+                { X509Extensions.BasicConstraints, new X509Extension(true, new DerOctetString(new BasicConstraints(false))) },
+                { X509Extensions.KeyUsage, new X509Extension(true, new DerOctetString(new KeyUsage(KeyUsage.DigitalSignature | KeyUsage.KeyEncipherment | KeyUsage.DataEncipherment | KeyUsage.NonRepudiation))) },
+                { X509Extensions.ExtendedKeyUsage, new X509Extension(false, new DerOctetString(new ExtendedKeyUsage(KeyPurposeID.IdKPServerAuth, KeyPurposeID.IdKPClientAuth))) },
+                { X509Extensions.SubjectKeyIdentifier, new X509Extension(false, new DerOctetString(new SubjectKeyIdentifierStructure(asymmetricKeyPair.Public))) },
+            };
+
+            if ((subjectAlternativeNames != null) && subjectAlternativeNames.Any())
+            {
+                var generalNames = subjectAlternativeNames.Select(_ => new GeneralName(GeneralName.DnsName, _)).ToArray();
+
+                oidToExtensionMap.Add(X509Extensions.SubjectAlternativeName, new X509Extension(false, new DerOctetString(new GeneralNames(generalNames))));
             }
 
             var signatureFactory = new Asn1SignatureFactory(signatureAlgorithm.ToSignatureAlgorithmString(), asymmetricKeyPair.Private);
 
-            var subject = new X509Name(attributesInOrder.Select(_ => _.Identifier).ToList(), attributesInOrder.Select(_ => _.Value).ToList());
-
-            var extensionsForCsr = extensions.ToDictionary(_ => _.Key, _ => _.Value);
-
-            var result = new Pkcs10CertificationRequest(
-                signatureFactory,
-                subject,
-                asymmetricKeyPair.Public,
-                new DerSet(new AttributePkcs(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(new X509Extensions(extensionsForCsr)))));
+            var result = new SslCreationInfo
+            {
+                Subject = subject,
+                SignatureFactory = signatureFactory,
+                OidToExtensionMap = oidToExtensionMap,
+            };
 
             return result;
         }
@@ -1841,6 +1862,15 @@ namespace OBeautifulCode.Security.Recipes
             public DerObjectIdentifier Identifier { get; }
 
             public string Value { get; }
+        }
+
+        private class SslCreationInfo
+        {
+            public Asn1SignatureFactory SignatureFactory { get; set; }
+            
+            public X509Name Subject { get; set; }
+
+            public IReadOnlyDictionary<DerObjectIdentifier, X509Extension> OidToExtensionMap { get; set; }
         }
     }
 }
