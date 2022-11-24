@@ -456,6 +456,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentNullException"><paramref name="asymmetricKeyPair"/> is null.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="commonName"/> or <paramref name="organizationalUnit"/>or <paramref name="organization"/> or <paramref name="locality"/> or <paramref name="state"/> or <paramref name="country"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="commonName"/> or <paramref name="organizationalUnit"/> or <paramref name="organization"/> or <paramref name="locality"/> or <paramref name="state"/> or <paramref name="country"/> is white space.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="validityTimeRange"/> is null.</exception>
         [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
         public static X509Certificate2 CreateSelfSignedSslCertificate(
             this AsymmetricCipherKeyPair asymmetricKeyPair,
@@ -470,6 +471,11 @@ namespace OBeautifulCode.Security.Recipes
             SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.Sha1WithRsaEncryption)
         {
             var sslCreationInfo = GetSslCreationInfo(asymmetricKeyPair, commonName, subjectAlternativeNames, organizationalUnit, organization, locality, state, country, signatureAlgorithm);
+
+            if (validityTimeRange == null)
+            {
+                throw new ArgumentNullException(nameof(validityTimeRange));
+            }
 
             var generator = new X509V3CertificateGenerator();
 
@@ -492,7 +498,7 @@ namespace OBeautifulCode.Security.Recipes
 
             generator.SetNotAfter(validityTimeRange.EndDateTimeInUtc);
 
-            generator.SetSerialNumber(new BigInteger(DateTime.UtcNow.Ticks.ToString()));
+            generator.SetSerialNumber(new BigInteger(DateTime.UtcNow.Ticks.ToString(CultureInfo.InvariantCulture)));
 
             var bouncyCert = generator.Generate(sslCreationInfo.SignatureFactory);
 
@@ -1773,6 +1779,7 @@ namespace OBeautifulCode.Security.Recipes
         /// The equivalent Bouncy certificate.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="cert"/> is null.</exception>
+        [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = "Too confusing with System and Bouncy both having an X509Certificate type.")]
         public static X509Certificate ToBouncyX509Certificate(
             this X509Certificate2 cert)
         {
