@@ -172,7 +172,7 @@ namespace OBeautifulCode.Security.Recipes
 
             var pemEncodedIntermediateCertificateChain = File.ReadAllText(pemEncodedIntermediateCertificateChainFilePath);
 
-            var intermediateCertificateChain = CertHelper.ReadCertsFromPemEncodedString(pemEncodedIntermediateCertificateChain);
+            var intermediateCertificateChain = ReadCertsFromPemEncodedString(pemEncodedIntermediateCertificateChain);
 
             var pemEncodedCertificate = File.ReadAllText(pemEncodedCertificateFilePath);
 
@@ -1625,6 +1625,60 @@ namespace OBeautifulCode.Security.Recipes
         }
 
         /// <summary>
+        /// Reads a PKCS #12 certificate (bundles private key with X.509 certificate) from PEM-encoded strings.
+        /// </summary>
+        /// <param name="pemEncodedCert">The PEM-encoded certificate.</param>
+        /// <param name="pemEncodedPrivateKey">The PEM-encoded private key.</param>
+        /// <returns>
+        /// The certificate.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedCert"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pemEncodedCert"/> is white space.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="pemEncodedPrivateKey"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="pemEncodedPrivateKey"/> is white space.</exception>
+        public static X509Certificate2 ReadPkcs12CertFromPemEncodedStrings(
+            string pemEncodedCert,
+            string pemEncodedPrivateKey)
+        {
+            if (pemEncodedCert == null)
+            {
+                throw new ArgumentNullException(nameof(pemEncodedCert));
+            }
+
+            if (string.IsNullOrWhiteSpace(pemEncodedCert))
+            {
+                throw new ArgumentException(Invariant($"'{nameof(pemEncodedCert)}' is white space"));
+            }
+
+            if (pemEncodedPrivateKey == null)
+            {
+                throw new ArgumentNullException(nameof(pemEncodedPrivateKey));
+            }
+
+            if (string.IsNullOrWhiteSpace(pemEncodedPrivateKey))
+            {
+                throw new ArgumentException(Invariant($"'{nameof(pemEncodedPrivateKey)}' is white space"));
+            }
+
+            var cert = ReadCertsFromPemEncodedString(pemEncodedCert).Single();
+
+            var privateKey = ReadPrivateKeyFromPemEncodedString(pemEncodedPrivateKey);
+
+            if (privateKey is RsaPrivateCrtKeyParameters rsaPrivateKey)
+            {
+                cert.PrivateKey = DotNetUtilities.ToRSA(rsaPrivateKey);
+            }
+            else
+            {
+                throw new NotSupportedException(Invariant($"This type of {nameof(AsymmetricKeyParameter)} is not supported: {privateKey.GetType()}."));
+            }
+
+            var result = new X509Certificate2(cert.Export(X509ContentType.Pkcs12));
+
+            return result;
+        }
+
+        /// <summary>
         /// Reads a certificate signing request encoded in PEM.
         /// </summary>
         /// <param name="pemEncodedCsr">The PEM encoded certificate signing request.</param>
@@ -1647,10 +1701,13 @@ namespace OBeautifulCode.Security.Recipes
             }
 
             Pkcs10CertificationRequest result;
+
             using (var stringReader = new StringReader(pemEncodedCsr))
             {
                 var pemReader = new PemReader(stringReader);
+
                 var pemObject = pemReader.ReadPemObject();
+
                 result = new Pkcs10CertificationRequest(pemObject.Content);
             }
 
@@ -1715,9 +1772,15 @@ namespace OBeautifulCode.Security.Recipes
         /// <returns>
         /// The equivalent Bouncy certificate.
         /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="cert"/> is null.</exception>
         public static X509Certificate ToBouncyX509Certificate(
             this X509Certificate2 cert)
         {
+            if (cert == null)
+            {
+                throw new ArgumentNullException(nameof(cert));
+            }
+
             var result = DotNetUtilities.FromX509Certificate(cert);
 
             return result;
@@ -1730,9 +1793,15 @@ namespace OBeautifulCode.Security.Recipes
         /// <returns>
         /// The equivalent System certificate.
         /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="cert"/> is null.</exception>
         public static X509Certificate2 ToSystemX509Certificate(
             this X509Certificate cert)
         {
+            if (cert == null)
+            {
+                throw new ArgumentNullException(nameof(cert));
+            }
+
             var result = new X509Certificate2(cert.GetEncoded());
 
             return result;
