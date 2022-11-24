@@ -9,17 +9,13 @@ namespace OBeautifulCode.Security.Recipes.Test
     using System;
     using System.Collections.Generic;
     using System.IO;
-
+    using System.Security.Cryptography.X509Certificates;
     using FluentAssertions;
-
     using OBeautifulCode.Reflection.Recipes;
-
     using Org.BouncyCastle.Crypto;
     using Org.BouncyCastle.Crypto.Parameters;
     using Org.BouncyCastle.OpenSsl;
     using Org.BouncyCastle.Pkcs;
-    using Org.BouncyCastle.X509;
-
     using Xunit;
 
     public static class PemHelperTest
@@ -117,7 +113,7 @@ namespace OBeautifulCode.Security.Recipes.Test
         public static void AsPemEncodedString_IReadOnlyList_of_X509Certificate___Should_throw_ArgumentNullException___When_parameter_certChain_is_null()
         {
             // Arrange, Act
-            var ex = Record.Exception(() => ((IReadOnlyList<X509Certificate>)null).AsPemEncodedString());
+            var ex = Record.Exception(() => ((IReadOnlyList<X509Certificate2>)null).AsPemEncodedString());
 
             // Assert
             ex.Should().BeOfType<ArgumentNullException>();

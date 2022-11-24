@@ -9,15 +9,11 @@ namespace OBeautifulCode.Security.Recipes.Test
     using System;
     using System.Collections.Generic;
     using System.Linq;
-
+    using System.Security.Cryptography.X509Certificates;
     using FluentAssertions;
-
     using OBeautifulCode.Reflection.Recipes;
-
     using Org.BouncyCastle.Asn1.X509;
     using Org.BouncyCastle.Pkcs;
-    using Org.BouncyCastle.X509;
-
     using Xunit;
 
     public static class CertHelperTest
@@ -135,7 +131,7 @@ namespace OBeautifulCode.Security.Recipes.Test
         public static void GetX509Field___Should_throw_ArgumentNullException___When_parameter_cert_is_null()
         {
             // Arrange, Act
-            var ex = Record.Exception(() => ((X509Certificate)null).GetX509Fields());
+            var ex = Record.Exception(() => ((X509Certificate2)null).GetX509Fields());
 
             // Assert
             ex.Should().BeOfType<ArgumentNullException>();
@@ -171,7 +167,7 @@ namespace OBeautifulCode.Security.Recipes.Test
         public static void GetThumbprint___Should_throw_ArgumentNullException___When_parameter_cert_is_null()
         {
             // Arrange, Act
-            var ex = Record.Exception(() => ((X509Certificate)null).GetThumbprint());
+            var ex = Record.Exception(() => ((X509Certificate2)null).GetThumbprint());
 
             // Assert
             ex.Should().BeOfType<ArgumentNullException>();
@@ -196,7 +192,7 @@ namespace OBeautifulCode.Security.Recipes.Test
         public static void GetValidityPeriod___Should_throw_ArgumentNullException___When_parameter_cert_is_null()
         {
             // Arrange, Act
-            var ex = Record.Exception(() => ((X509Certificate)null).GetValidityPeriod());
+            var ex = Record.Exception(() => ((X509Certificate2)null).GetValidityPeriod());
 
             // Assert
             ex.Should().BeOfType<ArgumentNullException>();
@@ -257,7 +253,7 @@ namespace OBeautifulCode.Security.Recipes.Test
         public static void GetX509SubjectAttributes_X509Certificate___Should_throw_ArgumentNullException___When_parameter_cert_is_null()
         {
             // Arrange, Act
-            var ex = Record.Exception(() => ((X509Certificate)null).GetX509SubjectAttributes());
+            var ex = Record.Exception(() => ((X509Certificate2)null).GetX509SubjectAttributes());
 
             // Assert
             ex.Should().BeOfType<ArgumentNullException>();

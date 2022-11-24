@@ -8,13 +8,9 @@ namespace OBeautifulCode.Security.Recipes.Test
 {
     using System;
     using System.Linq;
-
+    using System.Security.Cryptography.X509Certificates;
     using FluentAssertions;
-
     using OBeautifulCode.Reflection.Recipes;
-
-    using Org.BouncyCastle.X509;
-
     using Xunit;
 
     public static class ExtractedPfxFileTest
@@ -40,7 +36,7 @@ namespace OBeautifulCode.Security.Recipes.Test
             var privateKey = CertHelper.CreateRsaKeyPair().Private;
 
             // Act
-            var ex = Record.Exception(() => new ExtractedPfxFile(new X509Certificate[] { }, privateKey));
+            var ex = Record.Exception(() => new ExtractedPfxFile(new X509Certificate2[] { }, privateKey));
 
             // Assert
             ex.Should().BeOfType<ArgumentException>();

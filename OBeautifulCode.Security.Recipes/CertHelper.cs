@@ -20,10 +20,8 @@ namespace OBeautifulCode.Security.Recipes
     using global::System.Security.Cryptography.X509Certificates;
     using global::System.Text;
     using global::System.Text.RegularExpressions;
-
     using OBeautifulCode.CodeAnalysis.Recipes;
     using OBeautifulCode.Type;
-
     using Org.BouncyCastle.Asn1;
     using Org.BouncyCastle.Asn1.Pkcs;
     using Org.BouncyCastle.Asn1.X509;
@@ -38,9 +36,7 @@ namespace OBeautifulCode.Security.Recipes
     using Org.BouncyCastle.Security;
     using Org.BouncyCastle.X509;
     using Org.BouncyCastle.X509.Extension;
-
     using static global::System.FormattableString;
-
     using ContentInfo = global::System.Security.Cryptography.Pkcs.ContentInfo;
     using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
     using X509Extension = Org.BouncyCastle.Asn1.X509.X509Extension;
@@ -218,7 +214,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="IOException"><paramref name="overwrite"/> is false and there is a file at <paramref name="outputPfxFilePath"/>.</exception>
         [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Creating a PFX requires lots of types.")]
         public static void CreatePfxFile(
-            IReadOnlyList<X509Certificate> certChain,
+            IReadOnlyList<X509Certificate2> certChain,
             string clearTextPassword,
             string outputPfxFilePath,
             bool overwrite,
@@ -268,6 +264,7 @@ namespace OBeautifulCode.Security.Recipes
             }
 
             var mode = overwrite ? FileMode.Create : FileMode.CreateNew;
+
             using (var fileStream = new FileStream(outputPfxFilePath, mode, FileAccess.Write, FileShare.None))
             {
                 CreatePfxFile(certChain, clearTextPassword, fileStream, privateKey);
@@ -294,7 +291,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentException"><paramref name="privateKey"/> is not null and not private.</exception>
         [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Creating a PFX requires lots of types.")]
         public static void CreatePfxFile(
-            IReadOnlyList<X509Certificate> certChain,
+            IReadOnlyList<X509Certificate2> certChain,
             string clearTextPassword,
             Stream output,
             AsymmetricKeyParameter privateKey = null)
@@ -350,7 +347,7 @@ namespace OBeautifulCode.Security.Recipes
 
             foreach (var cert in certChain)
             {
-                var certEntry = new X509CertificateEntry(cert);
+                var certEntry = new X509CertificateEntry(cert.ToBouncyX509Certificate());
 
                 certEntries.Add(certEntry);
 
@@ -460,7 +457,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentNullException"><paramref name="commonName"/> or <paramref name="organizationalUnit"/>or <paramref name="organization"/> or <paramref name="locality"/> or <paramref name="state"/> or <paramref name="country"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="commonName"/> or <paramref name="organizationalUnit"/> or <paramref name="organization"/> or <paramref name="locality"/> or <paramref name="state"/> or <paramref name="country"/> is white space.</exception>
         [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "There are many types required to construct a CSR.")]
-        public static X509Certificate CreateSelfSignedSslCertificate(
+        public static X509Certificate2 CreateSelfSignedSslCertificate(
             this AsymmetricCipherKeyPair asymmetricKeyPair,
             string commonName,
             IReadOnlyCollection<string> subjectAlternativeNames,
@@ -497,7 +494,9 @@ namespace OBeautifulCode.Security.Recipes
 
             generator.SetSerialNumber(new BigInteger(DateTime.UtcNow.Ticks.ToString()));
 
-            var result = generator.Generate(sslCreationInfo.SignatureFactory);
+            var bouncyCert = generator.Generate(sslCreationInfo.SignatureFactory);
+
+            var result = bouncyCert.ToSystemX509Certificate();
 
             return result;
         }
@@ -967,6 +966,7 @@ namespace OBeautifulCode.Security.Recipes
             using (var inputStream = new MemoryStream(input))
             {
                 var result = ExtractCryptographicObjectsFromPfxFile(inputStream, clearTextPassword);
+
                 return result;
             }
         }
@@ -1011,13 +1011,13 @@ namespace OBeautifulCode.Security.Recipes
             
             var aliases = store.Aliases;
 
-            var certificateChain = new List<X509Certificate>();
+            var certificateChain = new List<X509Certificate2>();
             
             foreach (var alias in aliases)
             {
                 var certEntry = store.GetCertificate(alias.ToString());
 
-                certificateChain.Add(certEntry.Certificate);
+                certificateChain.Add(certEntry.Certificate.ToSystemX509Certificate());
             }
 
             var endUserCertificate = certificateChain.GetEndUserCertFromCertChain();
@@ -1118,7 +1118,7 @@ namespace OBeautifulCode.Security.Recipes
 
             var parser = new X509CertificateParser();
 
-            var bouncyCerts = new List<X509Certificate>();
+            var certs = new List<X509Certificate2>();
 
             using (var chain = new X509Chain())
             {
@@ -1128,11 +1128,11 @@ namespace OBeautifulCode.Security.Recipes
                 {
                     var bouncyCert = parser.ReadCertificate(chainElement.Certificate.Export(X509ContentType.Cert));
 
-                    bouncyCerts.Add(bouncyCert);
+                    certs.Add(bouncyCert.ToSystemX509Certificate());
                 }
             }
 
-            CreatePfxFile(bouncyCerts, unsecuredPassword, filePath, true, privateKey);
+            CreatePfxFile(certs, unsecuredPassword, filePath, true, privateKey);
         }
 
         /// <summary>
@@ -1146,8 +1146,8 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
-        public static X509Certificate GetEndUserCertFromCertChain(
-            this IReadOnlyCollection<X509Certificate> certChain)
+        public static X509Certificate2 GetEndUserCertFromCertChain(
+            this IReadOnlyCollection<X509Certificate2> certChain)
         {
             if (certChain == null)
             {
@@ -1165,6 +1165,7 @@ namespace OBeautifulCode.Security.Recipes
             }
 
             var result = certChain.OrderCertChainFromHighestToLowestLevelOfTrust().Last();
+
             return result;
         }
 
@@ -1180,8 +1181,8 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
-        public static IReadOnlyList<X509Certificate> GetIntermediateChainFromCertChain(
-            this IReadOnlyCollection<X509Certificate> certChain)
+        public static IReadOnlyList<X509Certificate2> GetIntermediateChainFromCertChain(
+            this IReadOnlyCollection<X509Certificate2> certChain)
         {
             if (certChain == null)
             {
@@ -1213,7 +1214,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentNullException"><paramref name="cert"/> is null.</exception>
         [SuppressMessage("Microsoft.Globalization", "CA1308:NormalizeStringsToUppercase", Justification = "We specifically want lower-case here.")]
         public static string GetThumbprint(
-            this X509Certificate cert)
+            this X509Certificate2 cert)
         {
             if (cert == null)
             {
@@ -1222,7 +1223,7 @@ namespace OBeautifulCode.Security.Recipes
 
             using (var shaProvider = new SHA1CryptoServiceProvider())
             {
-                var hash = shaProvider.ComputeHash(cert.GetEncoded());
+                var hash = shaProvider.ComputeHash(cert.ToBouncyX509Certificate().GetEncoded());
 
                 var result = BitConverter.ToString(hash).Replace("-", " ").ToLowerInvariant();
 
@@ -1239,14 +1240,16 @@ namespace OBeautifulCode.Security.Recipes
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="cert"/> is null.</exception>
         public static UtcDateTimeRangeInclusive GetValidityPeriod(
-            this X509Certificate cert)
+            this X509Certificate2 cert)
         {
             if (cert == null)
             {
                 throw new ArgumentNullException(nameof(cert));
             }
 
-            var result = new UtcDateTimeRangeInclusive(cert.NotBefore, cert.NotAfter);
+            var bouncyCert = cert.ToBouncyX509Certificate();
+
+            var result = new UtcDateTimeRangeInclusive(bouncyCert.NotBefore, bouncyCert.NotAfter);
 
             return result;
         }
@@ -1260,22 +1263,24 @@ namespace OBeautifulCode.Security.Recipes
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="cert"/> is null.</exception>
         public static IReadOnlyDictionary<X509FieldKind, string> GetX509Fields(
-            this X509Certificate cert)
+            this X509Certificate2 cert)
         {
             if (cert == null)
             {
                 throw new ArgumentNullException(nameof(cert));
             }
 
+            var bouncyCert = cert.ToBouncyX509Certificate();
+
             var result = new Dictionary<X509FieldKind, string>
             {
-                { X509FieldKind.IssuerName, cert.IssuerDN?.ToString() },
-                { X509FieldKind.NotAfter, cert.NotAfter.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture) },
-                { X509FieldKind.NotBefore, cert.NotBefore.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture) },
-                { X509FieldKind.SerialNumber, cert.SerialNumber?.ToString() },
-                { X509FieldKind.SignatureAlgorithmName, cert.SigAlgName },
-                { X509FieldKind.SubjectName, cert.SubjectDN?.ToString() },
-                { X509FieldKind.Version, cert.Version.ToString(CultureInfo.InvariantCulture) },
+                { X509FieldKind.IssuerName, bouncyCert.IssuerDN?.ToString() },
+                { X509FieldKind.NotAfter, bouncyCert.NotAfter.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture) },
+                { X509FieldKind.NotBefore, bouncyCert.NotBefore.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture) },
+                { X509FieldKind.SerialNumber, bouncyCert.SerialNumber?.ToString() },
+                { X509FieldKind.SignatureAlgorithmName, bouncyCert.SigAlgName },
+                { X509FieldKind.SubjectName, bouncyCert.SubjectDN?.ToString() },
+                { X509FieldKind.Version, bouncyCert.Version.ToString(CultureInfo.InvariantCulture) },
             };
             return result;
         }
@@ -1313,14 +1318,16 @@ namespace OBeautifulCode.Security.Recipes
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="cert"/> is null.</exception>
         public static IReadOnlyDictionary<X509SubjectAttributeKind, string> GetX509SubjectAttributes(
-            this X509Certificate cert)
+            this X509Certificate2 cert)
         {
             if (cert == null)
             {
                 throw new ArgumentNullException(nameof(cert));
             }
 
-            var subject = cert.SubjectDN;
+            var bouncyCert = cert.ToBouncyX509Certificate();
+
+            var subject = bouncyCert.SubjectDN;
 
             var result = subject.GetX509SubjectAttributes();
 
@@ -1405,8 +1412,8 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
-        public static IReadOnlyList<X509Certificate> OrderCertChainFromLowestToHighestLevelOfTrust(
-            this IReadOnlyCollection<X509Certificate> certChain)
+        public static IReadOnlyList<X509Certificate2> OrderCertChainFromLowestToHighestLevelOfTrust(
+            this IReadOnlyCollection<X509Certificate2> certChain)
         {
             if (certChain == null)
             {
@@ -1440,8 +1447,8 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentException"><paramref name="certChain"/> contains a null element.</exception>
         /// <exception cref="ArgumentException"><paramref name="certChain"/> is malformed.</exception>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = ObcSuppressBecause.CA1502_AvoidExcessiveComplexity_DisagreeWithAssessment)]
-        public static IReadOnlyList<X509Certificate> OrderCertChainFromHighestToLowestLevelOfTrust(
-            this IReadOnlyCollection<X509Certificate> certChain)
+        public static IReadOnlyList<X509Certificate2> OrderCertChainFromHighestToLowestLevelOfTrust(
+            this IReadOnlyCollection<X509Certificate2> certChain)
         {
             if (certChain == null)
             {
@@ -1460,19 +1467,26 @@ namespace OBeautifulCode.Security.Recipes
 
             certChain = certChain.Distinct().ToList();
 
+            var bouncyCertChain = certChain
+                .Select(_ => _.ToBouncyX509Certificate())
+                .Distinct()
+                .ToList();
+
             // for every cert, record which other certs verify it
             var parentCertsByChildCert = new Dictionary<X509Certificate, List<X509Certificate>>();
-            foreach (var cert in certChain)
+            foreach (var bouncyCert in bouncyCertChain)
             {
-                parentCertsByChildCert.Add(cert, new List<X509Certificate>());
+                parentCertsByChildCert.Add(bouncyCert, new List<X509Certificate>());
 
-                var otherCerts = certChain.Except(new[] { cert }).ToList();
+                var otherCerts = bouncyCertChain.Except(new[] { bouncyCert }).ToList();
+
                 foreach (var otherCert in otherCerts)
                 {
                     try
                     {
-                        cert.Verify(otherCert.GetPublicKey());
-                        parentCertsByChildCert[cert].Add(otherCert);
+                        bouncyCert.Verify(otherCert.GetPublicKey());
+
+                        parentCertsByChildCert[bouncyCert].Add(otherCert);
                     }
 
                     // ReSharper disable once EmptyGeneralCatchClause
@@ -1506,11 +1520,15 @@ namespace OBeautifulCode.Security.Recipes
 
             // flip it and index the certs by parent
             var childCertByParentCert = parentCertsByChildCert.ToDictionary(_ => _.Value.Single(), _ => _.Key);
-            var result = new List<X509Certificate> { rootCert };
-            while (childCertByParentCert.ContainsKey(result.Last()))
+            var bouncyResult = new List<X509Certificate> { rootCert };
+            while (childCertByParentCert.ContainsKey(bouncyResult.Last()))
             {
-                result.Add(childCertByParentCert[result.Last()]);
+                bouncyResult.Add(childCertByParentCert[bouncyResult.Last()]);
             }
+
+            var result = bouncyResult
+                .Select(_ => _.ToSystemX509Certificate())
+                .ToList();
 
             return result;
         }
@@ -1527,7 +1545,7 @@ namespace OBeautifulCode.Security.Recipes
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="pemEncodedPkcs7"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="pemEncodedPkcs7"/> is white space.</exception>
-        public static IReadOnlyList<X509Certificate> ReadCertChainFromPemEncodedPkcs7CmsString(
+        public static IReadOnlyList<X509Certificate2> ReadCertChainFromPemEncodedPkcs7CmsString(
             string pemEncodedPkcs7)
         {
             if (pemEncodedPkcs7 == null)
@@ -1540,14 +1558,22 @@ namespace OBeautifulCode.Security.Recipes
                 throw new ArgumentException(Invariant($"'{nameof(pemEncodedPkcs7)}' is white space"));
             }
 
-            IReadOnlyList<X509Certificate> result;
+            IReadOnlyList<X509Certificate2> result;
             using (var stringReader = new StringReader(pemEncodedPkcs7))
             {
                 var pemReader = new PemReader(stringReader);
+
                 var pemObject = pemReader.ReadPemObject();
+                
                 var data = new CmsSignedData(pemObject.Content);
+                
                 var certStore = data.GetCertificates("COLLECTION");
-                result = certStore.GetMatches(null).Cast<X509Certificate>().ToList();
+                
+                result = certStore
+                    .GetMatches(null)
+                    .Cast<X509Certificate>()
+                    .Select(_ => _.ToSystemX509Certificate())
+                    .ToList();
             }
 
             return result;
@@ -1562,7 +1588,7 @@ namespace OBeautifulCode.Security.Recipes
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="pemEncodedCerts"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="pemEncodedCerts"/> is white space.</exception>
-        public static IReadOnlyList<X509Certificate> ReadCertsFromPemEncodedString(
+        public static IReadOnlyList<X509Certificate2> ReadCertsFromPemEncodedString(
             string pemEncodedCerts)
         {
             if (pemEncodedCerts == null)
@@ -1578,15 +1604,19 @@ namespace OBeautifulCode.Security.Recipes
             // remove empty lines - required so that PemReader.ReadObject doesn't return null in-between returning certs
             pemEncodedCerts = Regex.Replace(pemEncodedCerts, @"^\s*$[\r\n]*", string.Empty, RegexOptions.Multiline);
 
-            var result = new List<X509Certificate>();
+            var result = new List<X509Certificate2>();
             using (var stringReader = new StringReader(pemEncodedCerts))
             {
                 var pemReader = new PemReader(stringReader);
+
                 var certObject = pemReader.ReadObject();
+                
                 while (certObject != null)
                 {
                     var cert = certObject as X509Certificate;
-                    result.Add(cert);
+
+                    result.Add(cert.ToSystemX509Certificate());
+
                     certObject = pemReader.ReadObject();
                 }
             }
@@ -1674,6 +1704,36 @@ namespace OBeautifulCode.Security.Recipes
                     throw new NotSupportedException("Type of PEM encoded private key not supported: " + pemReaderResult.GetType());
                 }
             }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Converts a System certificate to a Bouncy certificate.
+        /// </summary>
+        /// <param name="cert">The System certificate.</param>
+        /// <returns>
+        /// The equivalent Bouncy certificate.
+        /// </returns>
+        public static X509Certificate ToBouncyX509Certificate(
+            this X509Certificate2 cert)
+        {
+            var result = DotNetUtilities.FromX509Certificate(cert);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Converts a Bouncy certificate to a System certificate.
+        /// </summary>
+        /// <param name="cert">The Bouncy certificate.</param>
+        /// <returns>
+        /// The equivalent System certificate.
+        /// </returns>
+        public static X509Certificate2 ToSystemX509Certificate(
+            this X509Certificate cert)
+        {
+            var result = new X509Certificate2(cert.GetEncoded());
 
             return result;
         }
