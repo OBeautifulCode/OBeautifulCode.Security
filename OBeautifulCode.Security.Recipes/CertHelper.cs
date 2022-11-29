@@ -664,22 +664,13 @@ namespace OBeautifulCode.Security.Recipes
         /// The decrypted string.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="bytes"/> is empty.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="certificate"/> is null.</exception>
         [SuppressMessage("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames", MessageId = "bytes", Justification = ObcSuppressBecause.CA1720_IdentifiersShouldNotContainTypeNames_TypeNameAddsClarityToIdentifierAndAlternativesDegradeClarity)]
         public static byte[] Decrypt(
             this byte[] bytes,
             X509Certificate2 certificate)
         {
-            if (bytes == null)
-            {
-                throw new ArgumentNullException(nameof(bytes));
-            }
-
-            if (certificate == null)
-            {
-                throw new ArgumentNullException(nameof(certificate));
-            }
-
             var result = bytes.Decrypt(new[] { certificate });
 
             return result;
@@ -694,6 +685,7 @@ namespace OBeautifulCode.Security.Recipes
         /// The decrypted string.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="bytes"/> is empty.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="certificates"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="certificates"/> is empty or contains a null element.</exception>
         [SuppressMessage("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames", MessageId = "bytes", Justification = ObcSuppressBecause.CA1720_IdentifiersShouldNotContainTypeNames_TypeNameAddsClarityToIdentifierAndAlternativesDegradeClarity)]
@@ -704,6 +696,11 @@ namespace OBeautifulCode.Security.Recipes
             if (bytes == null)
             {
                 throw new ArgumentNullException(nameof(bytes));
+            }
+
+            if (bytes.Length == 0)
+            {
+                throw new ArgumentException(Invariant($"{nameof(bytes)} is empty."));
             }
 
             if (certificates == null)
@@ -840,6 +837,7 @@ namespace OBeautifulCode.Security.Recipes
         /// The encrypted bytes.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="bytes"/> is empty.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="certificate"/> is null.</exception>
         [SuppressMessage("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames", MessageId = "bytes", Justification = ObcSuppressBecause.CA1720_IdentifiersShouldNotContainTypeNames_TypeNameAddsClarityToIdentifierAndAlternativesDegradeClarity)]
         public static byte[] Encrypt(
@@ -849,6 +847,11 @@ namespace OBeautifulCode.Security.Recipes
             if (bytes == null)
             {
                 throw new ArgumentNullException(nameof(bytes));
+            }
+
+            if (bytes.Length == 0)
+            {
+                throw new ArgumentException(Invariant($"{nameof(bytes)} is empty."));
             }
 
             if (certificate == null)
