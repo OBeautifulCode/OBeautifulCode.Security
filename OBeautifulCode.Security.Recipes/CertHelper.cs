@@ -1679,7 +1679,9 @@ namespace OBeautifulCode.Security.Recipes
                 throw new NotSupportedException(Invariant($"This type of {nameof(AsymmetricKeyParameter)} is not supported: {privateKey.GetType()}."));
             }
 
-            var result = new X509Certificate2(cert.Export(X509ContentType.Pkcs12));
+            // Mark private key as exportable so that code using this cert has access to it.
+            // To do so, need to set an empty string password.
+            var result = new X509Certificate2(cert.Export(X509ContentType.Pkcs12), string.Empty, X509KeyStorageFlags.Exportable);
 
             return result;
         }
