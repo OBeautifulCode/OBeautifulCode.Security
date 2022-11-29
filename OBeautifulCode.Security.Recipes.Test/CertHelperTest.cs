@@ -10,14 +10,48 @@ namespace OBeautifulCode.Security.Recipes.Test
     using System.Collections.Generic;
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
+    using FakeItEasy;
     using FluentAssertions;
+    using OBeautifulCode.Assertion.Recipes;
+    using OBeautifulCode.Math.Recipes;
     using OBeautifulCode.Reflection.Recipes;
+    using OBeautifulCode.Type;
     using Org.BouncyCastle.Asn1.X509;
     using Org.BouncyCastle.Pkcs;
     using Xunit;
 
     public static class CertHelperTest
     {
+        [Fact]
+        public static void Decrypt___Should_roundtrip_encrypted_payload___When_using_self_signed_Pkcs12_certificate_using_RSA()
+        {
+            // Arrange
+            var rsaKeyPair = CertHelper.CreateRsaKeyPair();
+
+            var cert = rsaKeyPair
+                .CreateSelfSignedSslCertificate("test", null, "test", "test", "test", "test", "test", new UtcDateTimeRangeInclusive(DateTime.UtcNow, DateTime.UtcNow.AddDays(1)))
+                .CreatePkcs12Certificate(rsaKeyPair.Private);
+
+            var expected = new List<byte[]>();
+
+            for (var x = 1; x <= 1000; x++)
+            {
+                var bytes = new byte[x];
+
+                ThreadSafeRandom.NextBytes(bytes);
+
+                expected.Add(bytes);
+            }
+
+            var encryptedBytes = expected.Select(_ => _.Encrypt(cert)).ToList();
+
+            // Act
+            var actual = encryptedBytes.Select(_ => _.Decrypt(cert)).ToList();
+
+            // Assert
+            actual.AsTest().Must().BeEqualTo(expected);
+        }
+
         [Fact]
         public static void ReadCertChainFromPemEncodedPkcs7CmsString___Should_throw_ArgumentNullException___When_parameter_pemEncodedPkcs7_is_null()
         {
