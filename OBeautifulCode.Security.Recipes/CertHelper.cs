@@ -519,7 +519,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentNullException"><paramref name="privateKey"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="privateKey"/> is not private.</exception>
         /// <exception cref="NotSupportedException">The specified kind of private key is not supported.</exception>
-        public static X509Certificate2 CreatePkcs12Cert(
+        public static X509Certificate2 CreatePkcs12Certificate(
             this X509Certificate2 cert,
             AsymmetricKeyParameter privateKey)
         {
@@ -1751,7 +1751,7 @@ namespace OBeautifulCode.Security.Recipes
 
             var privateKey = ReadPrivateKeyFromPemEncodedString(pemEncodedPrivateKey);
 
-            var result = cert.CreatePkcs12Cert(privateKey);
+            var result = cert.CreatePkcs12Certificate(privateKey);
 
             return result;
         }
