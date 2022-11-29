@@ -508,6 +508,53 @@ namespace OBeautifulCode.Security.Recipes
         }
 
         /// <summary>
+        /// Creates a PKCS #12 certificate (bundles private key with X.509 certificate).
+        /// </summary>
+        /// <param name="privateKey">The private key.</param>
+        /// <param name="cert">The certificate.</param>
+        /// <returns>
+        /// The certificate.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="cert"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="privateKey"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="privateKey"/> is not private.</exception>
+        /// <exception cref="NotSupportedException">The specified kind of private key is not supported.</exception>
+        public static X509Certificate2 CreatePkcs12Cert(
+            this X509Certificate2 cert,
+            AsymmetricKeyParameter privateKey)
+        {
+            if (cert == null)
+            {
+                throw new ArgumentNullException(nameof(cert));
+            }
+
+            if (privateKey == null)
+            {
+                throw new ArgumentNullException(nameof(privateKey));
+            }
+
+            if (!privateKey.IsPrivate)
+            {
+                throw new ArgumentException(Invariant($"'{nameof(privateKey.IsPrivate)}' is false"));
+            }
+            
+            if (privateKey is RsaPrivateCrtKeyParameters rsaPrivateKey)
+            {
+                cert.PrivateKey = DotNetUtilities.ToRSA(rsaPrivateKey);
+            }
+            else
+            {
+                throw new NotSupportedException(Invariant($"This type of {nameof(AsymmetricKeyParameter)} is not supported: {privateKey.GetType()}."));
+            }
+
+            // Mark private key as exportable so that code using this cert has access to it.
+            // To do so, need to set an empty string password.
+            var result = new X509Certificate2(cert.Export(X509ContentType.Pkcs12), string.Empty, X509KeyStorageFlags.Exportable);
+
+            return result;
+        }
+
+        /// <summary>
         /// Decrypts a string that was encrypted as a base-64 string.
         /// </summary>
         /// <param name="base64EncodedEncryptedBytes">The base-64 encoded encrypted bytes.</param>
@@ -1675,6 +1722,7 @@ namespace OBeautifulCode.Security.Recipes
         /// <exception cref="ArgumentException"><paramref name="pemEncodedCert"/> is white space.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="pemEncodedPrivateKey"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="pemEncodedPrivateKey"/> is white space.</exception>
+        /// <exception cref="NotSupportedException">The specified kind of private key is not supported.</exception>
         public static X509Certificate2 ReadPkcs12CertFromPemEncodedStrings(
             string pemEncodedCert,
             string pemEncodedPrivateKey)
@@ -1703,18 +1751,7 @@ namespace OBeautifulCode.Security.Recipes
 
             var privateKey = ReadPrivateKeyFromPemEncodedString(pemEncodedPrivateKey);
 
-            if (privateKey is RsaPrivateCrtKeyParameters rsaPrivateKey)
-            {
-                cert.PrivateKey = DotNetUtilities.ToRSA(rsaPrivateKey);
-            }
-            else
-            {
-                throw new NotSupportedException(Invariant($"This type of {nameof(AsymmetricKeyParameter)} is not supported: {privateKey.GetType()}."));
-            }
-
-            // Mark private key as exportable so that code using this cert has access to it.
-            // To do so, need to set an empty string password.
-            var result = new X509Certificate2(cert.Export(X509ContentType.Pkcs12), string.Empty, X509KeyStorageFlags.Exportable);
+            var result = cert.CreatePkcs12Cert(privateKey);
 
             return result;
         }
