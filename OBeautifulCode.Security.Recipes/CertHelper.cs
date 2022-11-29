@@ -721,15 +721,45 @@ namespace OBeautifulCode.Security.Recipes
                 throw new ArgumentException(Invariant($"'{nameof(certificates)}' contains an element that is null"));
             }
 
-            var certCollection = new X509Certificate2Collection(certificates.ToArray());
+            var certificate = certificates.SingleOrDefault();
 
-            var envelopedCms = new EnvelopedCms();
+            if (certificate == null)
+            {
+                throw new NotSupportedException("Multiple certificates in the chain is not supported.");
+            }
 
-            envelopedCms.Decode(bytes);
+            var cmsEnvelopedData = new CmsEnvelopedData(bytes);
 
-            envelopedCms.Decrypt(certCollection);
+            var recipient = cmsEnvelopedData
+                .GetRecipientInfos()
+                .GetRecipients()
+                .Cast<KeyTransRecipientInformation>()
+                .Single();
 
-            var result = envelopedCms.ContentInfo.Content;
+            var privateKey = certificate.PrivateKey;
+
+            ICipherParameters cipherParameters;
+
+            if (privateKey is RSACryptoServiceProvider rsaProvider)
+            {
+                var parameters = rsaProvider.ExportParameters(true);
+
+                cipherParameters = new RsaPrivateCrtKeyParameters(
+                    new BigInteger(1, parameters.Modulus),
+                    new BigInteger(1, parameters.Exponent),
+                    new BigInteger(1, parameters.D),
+                    new BigInteger(1, parameters.P),
+                    new BigInteger(1, parameters.Q),
+                    new BigInteger(1, parameters.DP),
+                    new BigInteger(1, parameters.DQ),
+                    new BigInteger(1, parameters.InverseQ));
+            }
+            else
+            {
+                throw new NotSupportedException(Invariant($"This kind of private key is not supported: {privateKey.SignatureAlgorithm}."));
+            }
+
+            var result = recipient.GetContent(cipherParameters);
 
             return result;
         }
