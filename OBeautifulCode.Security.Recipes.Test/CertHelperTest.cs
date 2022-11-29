@@ -19,30 +19,6 @@ namespace OBeautifulCode.Security.Recipes.Test
     public static class CertHelperTest
     {
         [Fact]
-        public static void ReadCertsFromPemEncodedString___Should_throw_ArgumentNullException___When_parameter_pemEncodedCerts_is_null()
-        {
-            // Arrange, Act
-            var ex = Record.Exception(() => CertHelper.ReadCertsFromPemEncodedString(null));
-
-            // Assert
-            ex.Should().BeOfType<ArgumentNullException>();
-            ex.Message.Should().Contain("pemEncodedCerts");
-        }
-
-        [Fact]
-        public static void ReadCertsFromPemEncodedString___Should_roundtrip_to_same_PEM_encoded_string___When_writing_the_cert_chain_to_PEM()
-        {
-            // Arrange
-            var expected = AssemblyHelper.ReadEmbeddedResourceAsString("cert-chain.pem");
-
-            // Act
-            var actual = CertHelper.ReadCertsFromPemEncodedString(expected);
-
-            // Assert
-            actual.AsPemEncodedString().RemoveLineBreaks().Should().Be(expected.RemoveLineBreaks());
-        }
-
-        [Fact]
         public static void ReadCertChainFromPemEncodedPkcs7CmsString___Should_throw_ArgumentNullException___When_parameter_pemEncodedPkcs7_is_null()
         {
             // Arrange, Act
@@ -62,6 +38,30 @@ namespace OBeautifulCode.Security.Recipes.Test
 
             // Act
             var actual = CertHelper.ReadCertChainFromPemEncodedPkcs7CmsString(pemEncodedPkcs7);
+
+            // Assert
+            actual.AsPemEncodedString().RemoveLineBreaks().Should().Be(expected.RemoveLineBreaks());
+        }
+
+        [Fact]
+        public static void ReadCertsFromPemEncodedString___Should_throw_ArgumentNullException___When_parameter_pemEncodedCerts_is_null()
+        {
+            // Arrange, Act
+            var ex = Record.Exception(() => CertHelper.ReadCertsFromPemEncodedString(null));
+
+            // Assert
+            ex.Should().BeOfType<ArgumentNullException>();
+            ex.Message.Should().Contain("pemEncodedCerts");
+        }
+
+        [Fact]
+        public static void ReadCertsFromPemEncodedString___Should_roundtrip_to_same_PEM_encoded_string___When_writing_the_cert_chain_to_PEM()
+        {
+            // Arrange
+            var expected = AssemblyHelper.ReadEmbeddedResourceAsString("cert-chain.pem");
+
+            // Act
+            var actual = CertHelper.ReadCertsFromPemEncodedString(expected);
 
             // Assert
             actual.AsPemEncodedString().RemoveLineBreaks().Should().Be(expected.RemoveLineBreaks());
@@ -128,42 +128,6 @@ namespace OBeautifulCode.Security.Recipes.Test
         }
 
         [Fact]
-        public static void GetX509Field___Should_throw_ArgumentNullException___When_parameter_cert_is_null()
-        {
-            // Arrange, Act
-            var ex = Record.Exception(() => ((X509Certificate2)null).GetX509Fields());
-
-            // Assert
-            ex.Should().BeOfType<ArgumentNullException>();
-            ex.Message.Should().Contain("cert");
-        }
-
-        [Fact]
-        public static void GetX509Fields___Should_return_field_values_of_certificate___When_called()
-        {
-            // Arrange
-            var expected = new Dictionary<X509FieldKind, string>
-            {
-                { X509FieldKind.IssuerName, "C=US,ST=Arizona,L=Scottsdale,O=Starfield Technologies\\, Inc.,CN=Starfield Root Certificate Authority - G2" },
-                { X509FieldKind.NotAfter, "2031-05-03T07:00:00Z" },
-                { X509FieldKind.NotBefore, "2011-05-03T07:00:00Z" },
-                { X509FieldKind.SerialNumber, "7" },
-                { X509FieldKind.SignatureAlgorithmName, "SHA-256withRSA" },
-                { X509FieldKind.SubjectName, "C=US,ST=Arizona,L=Scottsdale,O=Starfield Technologies\\, Inc.,OU=http://certs.starfieldtech.com/repository/,CN=Starfield Secure Certificate Authority - G2" },
-                { X509FieldKind.Version, "3" },
-            };
-
-            var certChain = AssemblyHelper.ReadEmbeddedResourceAsString("cert-chain.pem");
-            var cert = CertHelper.ReadCertsFromPemEncodedString(certChain).First();
-
-            // Act
-            var actual = cert.GetX509Fields();
-
-            // Assert
-            actual.Should().BeEquivalentTo(expected);
-        }
-
-        [Fact]
         public static void GetThumbprint___Should_throw_ArgumentNullException___When_parameter_cert_is_null()
         {
             // Arrange, Act
@@ -212,6 +176,42 @@ namespace OBeautifulCode.Security.Recipes.Test
             // Assert
             actual.StartDateTimeInUtc.Should().Be(new DateTime(2011, 5, 3, 7, 0, 0, DateTimeKind.Utc));
             actual.EndDateTimeInUtc.Should().Be(new DateTime(2031, 5, 3, 7, 0, 0, DateTimeKind.Utc));
+        }
+
+        [Fact]
+        public static void GetX509Field___Should_throw_ArgumentNullException___When_parameter_cert_is_null()
+        {
+            // Arrange, Act
+            var ex = Record.Exception(() => ((X509Certificate2)null).GetX509Fields());
+
+            // Assert
+            ex.Should().BeOfType<ArgumentNullException>();
+            ex.Message.Should().Contain("cert");
+        }
+
+        [Fact]
+        public static void GetX509Fields___Should_return_field_values_of_certificate___When_called()
+        {
+            // Arrange
+            var expected = new Dictionary<X509FieldKind, string>
+            {
+                { X509FieldKind.IssuerName, "C=US,ST=Arizona,L=Scottsdale,O=Starfield Technologies\\, Inc.,CN=Starfield Root Certificate Authority - G2" },
+                { X509FieldKind.NotAfter, "2031-05-03T07:00:00Z" },
+                { X509FieldKind.NotBefore, "2011-05-03T07:00:00Z" },
+                { X509FieldKind.SerialNumber, "7" },
+                { X509FieldKind.SignatureAlgorithmName, "SHA-256withRSA" },
+                { X509FieldKind.SubjectName, "C=US,ST=Arizona,L=Scottsdale,O=Starfield Technologies\\, Inc.,OU=http://certs.starfieldtech.com/repository/,CN=Starfield Secure Certificate Authority - G2" },
+                { X509FieldKind.Version, "3" },
+            };
+
+            var certChain = AssemblyHelper.ReadEmbeddedResourceAsString("cert-chain.pem");
+            var cert = CertHelper.ReadCertsFromPemEncodedString(certChain).First();
+
+            // Act
+            var actual = cert.GetX509Fields();
+
+            // Assert
+            actual.Should().BeEquivalentTo(expected);
         }
 
         [Fact]
