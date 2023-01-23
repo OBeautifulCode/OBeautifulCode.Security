@@ -13,6 +13,7 @@ namespace OBeautifulCode.Security.Recipes.Test
     using FakeItEasy;
     using FluentAssertions;
     using OBeautifulCode.Assertion.Recipes;
+    using OBeautifulCode.AutoFakeItEasy;
     using OBeautifulCode.Math.Recipes;
     using OBeautifulCode.Reflection.Recipes;
     using OBeautifulCode.Type;
@@ -352,6 +353,20 @@ namespace OBeautifulCode.Security.Recipes.Test
 
             // Assert
             actual.Should().BeEquivalentTo(expected);
+        }
+
+        [Fact]
+        public static void Decrypt___Should_roundtrip_bytes___When_encrypting_and_decrypting_with_well_known_testing_certificate()
+        {
+            // Arrange
+            var expected = A.Dummy<byte[]>();
+
+            // Act
+            var encryptedBytes = expected.Encrypt(CertHelper.TestingX509Certificate);
+            var actual = encryptedBytes.Decrypt(CertHelper.Pkcs12TestingCertificate);
+
+            // Assert
+            actual.AsTest().Must().BeEqualTo(actual);
         }
     }
 }
