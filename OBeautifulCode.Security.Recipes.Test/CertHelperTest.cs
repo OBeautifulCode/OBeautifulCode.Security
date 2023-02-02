@@ -8,6 +8,7 @@ namespace OBeautifulCode.Security.Recipes.Test
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
     using FakeItEasy;
@@ -51,6 +52,37 @@ namespace OBeautifulCode.Security.Recipes.Test
 
             // Assert
             actual.AsTest().Must().BeEqualTo(expected);
+        }
+
+        [Fact]
+        public static void Decrypt___Should_roundtrip_bytes___When_encrypting_and_decrypting_with_well_known_testing_certificate()
+        {
+            // Arrange
+            var expected = A.Dummy<byte[]>();
+
+            // Act
+            var encryptedBytes = expected.Encrypt(CertHelper.TestingX509Certificate);
+            var actual = encryptedBytes.Decrypt(CertHelper.Pkcs12TestingCertificate);
+
+            // Assert
+            actual.AsTest().Must().BeEqualTo(actual);
+        }
+
+        [Fact]
+        public static void Decrypt___Should_roundtrip_bytes___When_encrypting_large_payload()
+        {
+            // Act
+            var expected = new byte[107539476];
+
+            ThreadSafeRandom.NextBytes(expected);
+
+            var encrypted = expected.Encrypt(CertHelper.Pkcs12TestingCertificate);
+
+            // Act
+            var actual = encrypted.Decrypt(CertHelper.Pkcs12TestingCertificate);
+
+            // Assert
+            actual.AsTest().Must().BeEqualTo(actual);
         }
 
         [Fact]
@@ -353,20 +385,6 @@ namespace OBeautifulCode.Security.Recipes.Test
 
             // Assert
             actual.Should().BeEquivalentTo(expected);
-        }
-
-        [Fact]
-        public static void Decrypt___Should_roundtrip_bytes___When_encrypting_and_decrypting_with_well_known_testing_certificate()
-        {
-            // Arrange
-            var expected = A.Dummy<byte[]>();
-
-            // Act
-            var encryptedBytes = expected.Encrypt(CertHelper.TestingX509Certificate);
-            var actual = encryptedBytes.Decrypt(CertHelper.Pkcs12TestingCertificate);
-
-            // Assert
-            actual.AsTest().Must().BeEqualTo(actual);
         }
     }
 }
